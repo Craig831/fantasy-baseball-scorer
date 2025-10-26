@@ -1,0 +1,222 @@
+openapi: 3.0.3
+info:
+  title: Fantasy Baseball Scorer - Players API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+  - url: https://api.fantasy-baseball-scorer.com
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Players
+
+paths:
+  /players:
+    get:
+      tags: [Players]
+      summary: Search and filter players
+      description: Search players with filtering, sorting, and pagination. Scores calculated using active scoring config.
+      parameters:
+        - name: search
+          in: query
+          description: Search by player name
+          schema: {type: string}
+        - name: team
+          in: query
+          description: Filter by team code
+          schema: {type: string, pattern: '^[A-Z]{2,3}$', example: 'NYY'}
+        - name: position
+          in: query
+          description: Filter by position
+          schema: {type: string, enum: [C, 1B, 2B, 3B, SS, OF, P, DH, UT]}
+        - name: active
+          in: query
+          description: Filter by active status
+          schema: {type: boolean, default: true}
+        - name: sort
+          in: query
+          description: Sort field and direction
+          schema: {type: string, example: 'score:desc', enum: ['name:asc', 'name:desc', 'score:asc', 'score:desc', 'team:asc', 'position:asc']}
+        - name: page
+          in: query
+          schema: {type: integer, default: 1}
+        - name: limit
+          in: query
+          schema: {type: integer, default: 20, maximum: 100}
+      responses:
+        '200':
+          description: List of players with scores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: {$ref: '#/components/schemas/PlayerWithScore'}
+                  meta: {$ref: '#/components/schemas/Pagination'}
+
+  /players/{id}:
+    get:
+      tags: [Players]
+      summary: Get player details with statistics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+          description: MLB player ID
+        - name: season
+          in: query
+          schema: {type: integer, default: 2025}
+        - name: dateFrom
+          in: query
+          schema: {type: string, format: date}
+        - name: dateTo
+          in: query
+          schema: {type: string, format: date}
+      responses:
+        '200':
+          description: Player details with statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/PlayerDetail'}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+  /players/{id}/stats:
+    get:
+      tags: [Players]
+      summary: Get detailed player statistics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+        - name: season
+          in: query
+          schema: {type: integer, default: 2025}
+        - name: groupBy
+          in: query
+          schema: {type: string, enum: [game, week, month, season], default: game}
+      responses:
+        '200':
+          description: Detailed statistics breakdown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: {$ref: '#/components/schemas/PlayerStatistic'}
+
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
+
+  schemas:
+    PlayerWithScore:
+      type: object
+      properties:
+        id: {type: string, example: '660271'}
+        name: {type: string, example: 'Aaron Judge'}
+        team: {type: string, example: 'NYY'}
+        position: {type: string, example: 'OF'}
+        jerseyNumber: {type: integer, example: 99, nullable: true}
+        active: {type: boolean}
+        season: {type: integer, example: 2025}
+        projectedScore: {type: number, format: double, example: 125.5, description: 'Based on active scoring config'}
+        seasonStats:
+          type: object
+          properties:
+            battingAverage: {type: number, example: 0.311}
+            homeRuns: {type: integer, example: 58}
+            rbis: {type: integer, example: 144}
+            hits: {type: integer, example: 177}
+            runs: {type: integer, example: 128}
+
+    PlayerDetail:
+      allOf:
+        - $ref: '#/components/schemas/PlayerWithScore'
+        - type: object
+          properties:
+            recentGames:
+              type: array
+              items: {$ref: '#/components/schemas/PlayerStatistic'}
+              description: 'Last 10 games'
+            scoringBreakdown:
+              type: object
+              description: 'Score breakdown by stat category'
+              properties:
+                hits: {type: number, example: 177.0}
+                homeRuns: {type: number, example: 232.0}
+                rbis: {type: number, example: 144.0}
+                total: {type: number, example: 553.0}
+
+    PlayerStatistic:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        playerId: {type: string}
+        statDate: {type: string, format: date}
+        opponent: {type: string, nullable: true, example: 'BOS'}
+        isSeasonTotal: {type: boolean}
+        battingStats:
+          type: object
+          properties:
+            atBats: {type: integer}
+            hits: {type: integer}
+            doubles: {type: integer}
+            triples: {type: integer}
+            homeRuns: {type: integer}
+            runs: {type: integer}
+            rbis: {type: integer}
+            stolenBases: {type: integer}
+            walks: {type: integer}
+            strikeouts: {type: integer}
+            battingAverage: {type: number}
+        pitchingStats:
+          type: object
+          nullable: true
+          properties:
+            inningsPitched: {type: number}
+            hits: {type: integer}
+            runs: {type: integer}
+            earnedRuns: {type: integer}
+            walks: {type: integer}
+            strikeouts: {type: integer}
+            homeRuns: {type: integer}
+            wins: {type: integer}
+            losses: {type: integer}
+            saves: {type: integer}
+            era: {type: number}
+
+    Pagination:
+      type: object
+      properties:
+        page: {type: integer}
+        limit: {type: integer}
+        total: {type: integer}
+        totalPages: {type: integer}
+
+  responses:
+    NotFound:
+      description: Player not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code: {type: string, example: NOT_FOUND}
+                    message: {type: string, example: Player not found}

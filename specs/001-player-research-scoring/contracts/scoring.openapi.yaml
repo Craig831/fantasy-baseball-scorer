@@ -1,0 +1,204 @@
+openapi: 3.0.3
+info:
+  title: Fantasy Baseball Scorer - Scoring Configuration API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+  - url: https://api.fantasy-baseball-scorer.com
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Scoring Configurations
+
+paths:
+  /scoring-configs:
+    get:
+      tags: [Scoring Configurations]
+      summary: List user's scoring configurations
+      parameters:
+        - name: page
+          in: query
+          schema: {type: integer, default: 1}
+        - name: limit
+          in: query
+          schema: {type: integer, default: 20, maximum: 100}
+      responses:
+        '200':
+          description: List of scoring configurations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: {$ref: '#/components/schemas/ScoringConfig'}
+                  meta: {$ref: '#/components/schemas/Pagination'}
+
+    post:
+      tags: [Scoring Configurations]
+      summary: Create new scoring configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateScoringConfigInput'}
+      responses:
+        '201':
+          description: Scoring configuration created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/ScoringConfig'}
+
+  /scoring-configs/{id}:
+    get:
+      tags: [Scoring Configurations]
+      summary: Get scoring configuration by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Scoring configuration details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/ScoringConfig'}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+    patch:
+      tags: [Scoring Configurations]
+      summary: Update scoring configuration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateScoringConfigInput'}
+      responses:
+        '200':
+          description: Scoring configuration updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/ScoringConfig'}
+
+    delete:
+      tags: [Scoring Configurations]
+      summary: Delete scoring configuration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '204': {description: Deleted successfully}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+  /scoring-configs/{id}/activate:
+    patch:
+      tags: [Scoring Configurations]
+      summary: Set as active/default configuration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Configuration activated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/ScoringConfig'}
+
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
+
+  schemas:
+    ScoringConfig:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        userId: {type: string, format: uuid}
+        name: {type: string, example: "PPR League 2025"}
+        categories:
+          type: object
+          properties:
+            batting:
+              type: object
+              additionalProperties: {type: number}
+              example: {hits: 1.0, homeRuns: 4.0, rbis: 1.0}
+            pitching:
+              type: object
+              additionalProperties: {type: number}
+              example: {wins: 5.0, strikeouts: 1.0, saves: 5.0}
+        isActive: {type: boolean}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+
+    CreateScoringConfigInput:
+      type: object
+      required: [name, categories]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 100}
+        categories:
+          type: object
+          required: [batting, pitching]
+          properties:
+            batting: {type: object, additionalProperties: {type: number}}
+            pitching: {type: object, additionalProperties: {type: number}}
+        isActive: {type: boolean, default: false}
+
+    UpdateScoringConfigInput:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 100}
+        categories:
+          type: object
+          properties:
+            batting: {type: object, additionalProperties: {type: number}}
+            pitching: {type: object, additionalProperties: {type: number}}
+
+    Pagination:
+      type: object
+      properties:
+        page: {type: integer}
+        limit: {type: integer}
+        total: {type: integer}
+        totalPages: {type: integer}
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code: {type: string, example: NOT_FOUND}
+                    message: {type: string, example: Resource not found}

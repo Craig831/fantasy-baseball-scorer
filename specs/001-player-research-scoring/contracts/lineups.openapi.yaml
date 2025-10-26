@@ -1,0 +1,262 @@
+openapi: 3.0.3
+info:
+  title: Fantasy Baseball Scorer - Lineups API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+  - url: https://api.fantasy-baseball-scorer.com
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Lineups
+
+paths:
+  /lineups:
+    get:
+      tags: [Lineups]
+      summary: List user's lineups
+      parameters:
+        - name: gameDate
+          in: query
+          schema: {type: string, format: date}
+        - name: page
+          in: query
+          schema: {type: integer, default: 1}
+        - name: limit
+          in: query
+          schema: {type: integer, default: 20, maximum: 100}
+      responses:
+        '200':
+          description: List of lineups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: {$ref: '#/components/schemas/Lineup'}
+                  meta: {$ref: '#/components/schemas/Pagination'}
+
+    post:
+      tags: [Lineups]
+      summary: Create new lineup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateLineupInput'}
+      responses:
+        '201':
+          description: Lineup created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/LineupDetail'}
+
+  /lineups/{id}:
+    get:
+      tags: [Lineups]
+      summary: Get lineup with slots and players
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Lineup details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/LineupDetail'}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+    patch:
+      tags: [Lineups]
+      summary: Update lineup
+      description: Update lineup name, scoring config, or manage players (max 25 players per lineup)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateLineupInput'}
+      responses:
+        '200':
+          description: Lineup updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/LineupDetail'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+    delete:
+      tags: [Lineups]
+      summary: Delete lineup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '204': {description: Deleted successfully}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+  /lineups/{id}/duplicate:
+    post:
+      tags: [Lineups]
+      summary: Duplicate lineup
+      description: Create a copy of an existing lineup with new name
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: {type: string, minLength: 1, maxLength: 100}
+      responses:
+        '201':
+          description: Lineup duplicated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/LineupDetail'}
+
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
+
+  schemas:
+    Lineup:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        userId: {type: string, format: uuid}
+        name: {type: string, example: 'Week 1 Lineup'}
+        scoringConfigId: {type: string, format: uuid, nullable: true}
+        projectedScore: {type: number, format: double, example: 425.5}
+        actualScore: {type: number, format: double, nullable: true, example: 398.2}
+        gameDate: {type: string, format: date, nullable: true}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+
+    LineupDetail:
+      allOf:
+        - $ref: '#/components/schemas/Lineup'
+        - type: object
+          properties:
+            scoringConfig:
+              type: object
+              nullable: true
+              properties:
+                id: {type: string, format: uuid}
+                name: {type: string}
+            slots:
+              type: array
+              items: {$ref: '#/components/schemas/LineupSlot'}
+
+    LineupSlot:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        lineupId: {type: string, format: uuid}
+        slotOrder: {type: integer, minimum: 1, maximum: 25, example: 1}
+        playerId: {type: string, nullable: true}
+        player:
+          type: object
+          nullable: true
+          properties:
+            id: {type: string}
+            name: {type: string}
+            team: {type: string}
+            position: {type: string}
+        projectedScore: {type: number, format: double, example: 42.5}
+        actualScore: {type: number, format: double, nullable: true, example: 38.0}
+        locked: {type: boolean, default: false}
+
+    CreateLineupInput:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 100}
+        scoringConfigId: {type: string, format: uuid, nullable: true}
+        gameDate: {type: string, format: date, nullable: true}
+
+    UpdateLineupInput:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 100}
+        scoringConfigId: {type: string, format: uuid, nullable: true}
+        slots:
+          type: array
+          maxItems: 25
+          items:
+            type: object
+            required: [slotOrder]
+            properties:
+              slotOrder: {type: integer, minimum: 1, maximum: 25}
+              playerId: {type: string, nullable: true, description: 'Set to null to remove player from this slot'}
+
+    Pagination:
+      type: object
+      properties:
+        page: {type: integer}
+        limit: {type: integer}
+        total: {type: integer}
+        totalPages: {type: integer}
+
+  responses:
+    NotFound:
+      description: Lineup not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code: {type: string, example: NOT_FOUND}
+                    message: {type: string, example: Lineup not found}
+
+    BadRequest:
+      description: Validation error (e.g., max 25 players, duplicate player)
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code: {type: string, example: VALIDATION_ERROR}
+                    message: {type: string, example: Lineup cannot exceed 25 players}
+                    field: {type: string, example: slots, nullable: true}
