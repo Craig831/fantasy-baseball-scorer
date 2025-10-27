@@ -72,27 +72,30 @@ const HomePage: React.FC = () => {
                 You're successfully logged in! This is the home page of your fantasy baseball application.
               </p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="bg-indigo-50 overflow-hidden shadow rounded-lg">
+                <button
+                  onClick={() => navigate('/scoring-configs')}
+                  className="bg-indigo-50 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow text-left"
+                >
                   <div className="px-4 py-5 sm:p-6">
                     <h3 className="text-lg font-medium text-indigo-900">Scoring Configs</h3>
                     <p className="mt-2 text-sm text-indigo-700">
                       Create custom scoring configurations for your leagues
                     </p>
                   </div>
-                </div>
-                <div className="bg-green-50 overflow-hidden shadow rounded-lg">
+                </button>
+                <div className="bg-green-50 overflow-hidden shadow rounded-lg opacity-50">
                   <div className="px-4 py-5 sm:p-6">
                     <h3 className="text-lg font-medium text-green-900">Player Research</h3>
                     <p className="mt-2 text-sm text-green-700">
-                      Search and analyze MLB players with your scoring settings
+                      Search and analyze MLB players with your scoring settings (Coming Soon)
                     </p>
                   </div>
                 </div>
-                <div className="bg-purple-50 overflow-hidden shadow rounded-lg">
+                <div className="bg-purple-50 overflow-hidden shadow rounded-lg opacity-50">
                   <div className="px-4 py-5 sm:p-6">
                     <h3 className="text-lg font-medium text-purple-900">Lineups</h3>
                     <p className="mt-2 text-sm text-purple-700">
-                      Build and manage your fantasy lineups (up to 25 players)
+                      Build and manage your fantasy lineups - up to 25 players (Coming Soon)
                     </p>
                   </div>
                 </div>
