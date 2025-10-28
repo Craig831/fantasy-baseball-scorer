@@ -78,6 +78,8 @@ cd backend
 # Install dependencies
 npm install
 
+IMPORTANT: Ensure .env file is in backend directory and includes DATABASE_URL
+
 # Generate Prisma client
 npx prisma generate
 
