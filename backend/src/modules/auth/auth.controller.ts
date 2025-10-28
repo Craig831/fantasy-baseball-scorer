@@ -65,4 +65,95 @@ export class AuthController {
       data: user,
     };
   }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify email address with token' })
+  @ApiResponse({ status: 200, description: 'Email verified successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  async verifyEmail(@Body('token') token: string) {
+    const result = await this.authService.verifyEmail(token);
+    return {
+      data: result,
+    };
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend email verification link' })
+  @ApiResponse({ status: 200, description: 'Verification email sent' })
+  async resendVerification(@Body('email') email: string) {
+    const result = await this.authService.resendVerificationEmail(email);
+    return {
+      data: result,
+    };
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request password reset email' })
+  @ApiResponse({ status: 200, description: 'Password reset email sent' })
+  async forgotPassword(@Body('email') email: string) {
+    const result = await this.authService.requestPasswordReset(email);
+    return {
+      data: result,
+    };
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password with token' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  async resetPassword(
+    @Body('token') token: string,
+    @Body('newPassword') newPassword: string,
+  ) {
+    const result = await this.authService.resetPassword(token, newPassword);
+    return {
+      data: result,
+    };
+  }
+
+  @Post('mfa/setup')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Setup MFA - generates secret and QR code' })
+  @ApiResponse({ status: 200, description: 'MFA setup initiated' })
+  @ApiResponse({ status: 400, description: 'MFA already enabled' })
+  async setupMFA(@CurrentUser() user: any) {
+    const result = await this.authService.setupMFA(user.userId);
+    return {
+      data: result,
+    };
+  }
+
+  @Post('mfa/verify')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify MFA code and enable MFA' })
+  @ApiResponse({ status: 200, description: 'MFA enabled successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid MFA code' })
+  async verifyMFA(@CurrentUser() user: any, @Body('token') token: string) {
+    const result = await this.authService.verifyMFA(user.userId, token);
+    return {
+      data: result,
+    };
+  }
+
+  @Post('mfa/disable')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Disable MFA (requires MFA code)' })
+  @ApiResponse({ status: 200, description: 'MFA disabled successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid MFA code or MFA not enabled' })
+  async disableMFA(@CurrentUser() user: any, @Body('token') token: string) {
+    const result = await this.authService.disableMFA(user.userId, token);
+    return {
+      data: result,
+    };
+  }
 }

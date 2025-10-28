@@ -78,6 +78,16 @@ const LoginPage: React.FC = () => {
             </div>
           </div>
 
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => navigate('/forgot-password')}
+              className="text-sm text-indigo-600 hover:text-indigo-500"
+            >
+              Forgot your password?
+            </button>
+          </div>
+
           <div>
             <button
               type="submit"

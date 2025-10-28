@@ -114,10 +114,12 @@ The frontend will be available at http://localhost:3001
 
 ### ✅ Phase 1: Setup & Infrastructure
 - NestJS backend project initialized
-- React frontend project initialized
+- React frontend project initialized with TypeScript
 - Tailwind CSS configured
 - Docker Compose setup for PostgreSQL & Redis
 - Environment configuration
+- Vitest configured for frontend testing
+- Jest configured for backend testing
 
 ### ✅ Phase 2: Database Foundation
 - Complete Prisma schema with 8 models:
@@ -130,24 +132,59 @@ The frontend will be available at http://localhost:3001
   - AuditLog (security events)
   - RefreshToken (JWT rotation)
 
-### ✅ Phase 3: Authentication
-- User registration endpoint
-- Login with JWT tokens
-- Token refresh mechanism
+### ✅ Phase 3: User Story 1 - User Account Management (Complete)
+
+**Backend:**
+- User registration with email/password
+- Login with JWT access & refresh tokens
+- Token refresh mechanism with rotation
 - Password hashing with bcrypt (cost 12)
-- Audit logging for security events
-- Frontend registration page
-- Frontend login page
+- Email verification flow with tokens
+- Password reset flow with secure tokens
+- Multi-factor authentication (MFA) with TOTP/QR codes
+- User profile management (view, update, delete)
+- Account deletion (soft delete with cascade)
+- Audit logging for all security events
+- Protected routes with JWT guards
+- Comprehensive unit tests (24 tests passing)
+
+**Frontend:**
+- Registration page
+- Login page with "forgot password" link
 - Protected home/dashboard page
+- Account settings page with:
+  - Profile information display
+  - Email update
+  - Password change
+  - MFA setup with QR code display
+  - MFA enable/disable
+  - Account deletion
+- Email verification page
+- Password reset request page
+- Password reset confirmation page
 - Axios interceptors for automatic token refresh
+- React Router v7 for navigation
+- Comprehensive unit tests (16 tests passing with Vitest)
 
 ## API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - Create new account
-- `POST /api/auth/login` - Login with credentials
+- `POST /api/auth/login` - Login with credentials (supports MFA)
 - `POST /api/auth/refresh` - Refresh access token
 - `GET /api/auth/me` - Get current user (protected)
+- `POST /api/auth/verify-email` - Verify email with token
+- `POST /api/auth/resend-verification` - Resend verification email
+- `POST /api/auth/forgot-password` - Request password reset
+- `POST /api/auth/reset-password` - Reset password with token
+- `POST /api/auth/mfa/setup` - Setup MFA (returns QR code)
+- `POST /api/auth/mfa/verify` - Verify MFA code and enable
+- `POST /api/auth/mfa/disable` - Disable MFA
+
+### Users
+- `GET /api/users/me` - Get current user profile (protected)
+- `PATCH /api/users/me` - Update user profile (protected)
+- `DELETE /api/users/me` - Delete user account (protected)
 
 Full API documentation available at http://localhost:3000/api/docs
 
@@ -196,7 +233,9 @@ npx prisma studio
 npm run start         # Start production server
 npm run start:dev     # Start development server (watch mode)
 npm run build         # Build for production
-npm run test          # Run tests
+npm run test          # Run unit tests with Jest
+npm run test:watch    # Run tests in watch mode
+npm run test:cov      # Run tests with coverage report
 npm run lint          # Run ESLint
 ```
 
@@ -204,23 +243,100 @@ npm run lint          # Run ESLint
 ```bash
 npm start             # Start development server
 npm run build         # Build for production
-npm test              # Run tests
+npm test              # Run unit tests with Vitest
+npm run test:ui       # Run tests with interactive UI
+npm run test:coverage # Run tests with coverage report
 npm run lint          # Run ESLint
+```
+
+## Running Tests
+
+### Backend Tests (Jest)
+The backend uses Jest for unit testing. All tests are located in `*.spec.ts` files.
+
+```bash
+cd backend
+
+# Run all tests
+npm test
+
+# Run specific test file
+npm test -- auth.service.spec
+
+# Run tests in watch mode
+npm run test:watch
+
+# Generate coverage report
+npm run test:cov
+```
+
+**Current test coverage:**
+- ✅ 24 tests passing
+- `auth.service.spec.ts` - Authentication service tests (register, login, MFA, email verification, password reset)
+- `users.service.spec.ts` - User profile management tests (get/update/delete)
+
+### Frontend Tests (Vitest)
+The frontend uses Vitest for unit testing. All tests are located in `*.test.tsx` files.
+
+```bash
+cd frontend
+
+# Run all tests once
+npm test -- --run
+
+# Run tests in watch mode (default)
+npm test
+
+# Run tests with interactive UI
+npm run test:ui
+
+# Generate coverage report
+npm run test:coverage
+```
+
+**Current test coverage:**
+- ✅ 16 tests passing
+- `App.test.tsx` - Main app component tests
+- `LoginPage.test.tsx` - Login page functionality tests
+- `RegisterPage.test.tsx` - Registration page functionality tests
+
+### Running All Tests
+From the project root, you can run tests for both frontend and backend:
+
+```bash
+# Backend tests
+cd backend && npm test
+
+# Frontend tests
+cd frontend && npm test -- --run
 ```
 
 ## Next Steps
 
-The following features are planned but not yet implemented:
+The following features are planned for future implementation:
 
-- **Scoring Configurations**: Create and manage custom scoring settings
-- **Player Research**: Search MLB players with filters (team, position, etc.)
-- **Player Data Sync**: Hourly MLB data updates via mlb-stats-api
-- **Lineup Management**: Build flexible lineups (up to 25 players)
-- **Score Calculation**: Calculate projected and actual scores
-- **MFA**: Multi-factor authentication with TOTP
-- **Email Verification**: Email confirmation for new accounts
-- **Password Reset**: Secure password reset flow
-- **Mobile Optimization**: Touch-friendly UI for mobile devices
+### User Story 2: Scoring Configurations
+- Create and manage custom scoring settings
+- Define baseball-specific statistical categories
+- Set point values for batting and pitching stats
+- Activate/deactivate scoring configurations
+
+### User Story 3: Player Research
+- Search MLB players with filters (team, position, name)
+- Sort by calculated scores using active scoring config
+- View detailed player statistics
+- Player data sync via mlb-stats-api
+
+### User Story 4: Lineup Management
+- Build flexible lineups (up to 25 players, no position constraints)
+- Calculate projected scores based on selected scoring config
+- Calculate actual scores post-game
+- Save and manage multiple lineups
+
+### User Story 5: Mobile Optimization
+- Touch-friendly UI for mobile devices
+- Responsive layouts for all screen sizes
+- Progressive web app features
 
 ## Project Specifications
 

@@ -11,6 +11,8 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
+import * as speakeasy from 'speakeasy';
+import * as qrcode from 'qrcode';
 
 @Injectable()
 export class AuthService {
@@ -76,7 +78,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const { email, password } = loginDto;
+    const { email, password, mfaCode } = loginDto;
 
     // Find user
     const user = await this.prisma.user.findUnique({
@@ -98,6 +100,20 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Check MFA if enabled
+    if (user.mfaEnabled) {
+      if (!mfaCode) {
+        // Return special response indicating MFA is required
+        return {
+          mfaRequired: true,
+          userId: user.id,
+        };
+      }
+
+      // Validate MFA code
+      await this.validateMFALogin(user.id, mfaCode);
+    }
+
     // Update last login
     await this.prisma.user.update({
       where: { id: user.id },
@@ -115,7 +131,7 @@ export class AuthService {
         entityType: 'User',
         entityId: user.id,
         ipAddress: '127.0.0.1', // Should come from request
-        metadata: { email: user.email },
+        metadata: { email: user.email, mfaUsed: user.mfaEnabled },
       },
     });
 
@@ -160,6 +176,291 @@ export class AuthService {
     });
 
     return tokens;
+  }
+
+  async verifyEmail(token: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        emailVerificationToken: token,
+        emailVerified: false,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    // Mark email as verified
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        emailVerificationToken: null,
+      },
+    });
+
+    // Create audit log
+    await this.prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'EMAIL_VERIFIED',
+        entityType: 'User',
+        entityId: user.id,
+        ipAddress: '127.0.0.1',
+        metadata: { email: user.email },
+      },
+    });
+
+    return { message: 'Email verified successfully' };
+  }
+
+  async resendVerificationEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // Don't reveal if user exists
+      return { message: 'If your email exists, a verification link has been sent' };
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    // Generate new token
+    const emailVerificationToken = randomBytes(32).toString('hex');
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerificationToken },
+    });
+
+    // TODO: Send email with verification link
+    // For now, return the token (in production, this would be sent via email)
+    console.log(`Verification token for ${email}: ${emailVerificationToken}`);
+
+    return { message: 'Verification email sent' };
+  }
+
+  async requestPasswordReset(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // Don't reveal if user exists
+      return { message: 'If your email exists, a password reset link has been sent' };
+    }
+
+    if (user.deletedAt) {
+      return { message: 'If your email exists, a password reset link has been sent' };
+    }
+
+    // Generate reset token (expires in 1 hour)
+    const resetToken = randomBytes(32).toString('hex');
+    const resetExpiry = new Date();
+    resetExpiry.setHours(resetExpiry.getHours() + 1);
+
+    // Store reset token (we'll use emailVerificationToken field for now)
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerificationToken: resetToken,
+      },
+    });
+
+    // TODO: Send email with reset link
+    console.log(`Password reset token for ${email}: ${resetToken}`);
+
+    return { message: 'Password reset email sent' };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        emailVerificationToken: token,
+      },
+    });
+
+    if (!user || user.deletedAt) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    // Update password and clear reset token
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        emailVerificationToken: null,
+      },
+    });
+
+    // Revoke all refresh tokens
+    await this.prisma.refreshToken.updateMany({
+      where: { userId: user.id },
+      data: { revoked: true },
+    });
+
+    // Create audit log
+    await this.prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'PASSWORD_RESET',
+        entityType: 'User',
+        entityId: user.id,
+        ipAddress: '127.0.0.1',
+        metadata: { email: user.email },
+      },
+    });
+
+    return { message: 'Password reset successfully' };
+  }
+
+  async setupMFA(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (user.mfaEnabled) {
+      throw new BadRequestException('MFA is already enabled');
+    }
+
+    // Generate secret
+    const secret = speakeasy.generateSecret({
+      name: `Fantasy Baseball (${user.email})`,
+      issuer: 'Fantasy Baseball',
+    });
+
+    // Store the secret temporarily (not enabled yet)
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { mfaSecret: secret.base32 },
+    });
+
+    // Generate QR code
+    const qrCodeDataUrl = await qrcode.toDataURL(secret.otpauth_url);
+
+    return {
+      secret: secret.base32,
+      qrCode: qrCodeDataUrl,
+    };
+  }
+
+  async verifyMFA(userId: string, token: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.mfaSecret) {
+      throw new BadRequestException('MFA setup not initiated');
+    }
+
+    // Verify token
+    const verified = speakeasy.totp.verify({
+      secret: user.mfaSecret,
+      encoding: 'base32',
+      token,
+      window: 2, // Allow 2 time steps before/after
+    });
+
+    if (!verified) {
+      throw new BadRequestException('Invalid MFA code');
+    }
+
+    // Enable MFA
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { mfaEnabled: true },
+    });
+
+    // Create audit log
+    await this.prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'MFA_ENABLED',
+        entityType: 'User',
+        entityId: user.id,
+        ipAddress: '127.0.0.1',
+        metadata: { email: user.email },
+      },
+    });
+
+    return { message: 'MFA enabled successfully' };
+  }
+
+  async disableMFA(userId: string, token: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.mfaEnabled) {
+      throw new BadRequestException('MFA is not enabled');
+    }
+
+    // Verify token before disabling
+    const verified = speakeasy.totp.verify({
+      secret: user.mfaSecret,
+      encoding: 'base32',
+      token,
+      window: 2,
+    });
+
+    if (!verified) {
+      throw new BadRequestException('Invalid MFA code');
+    }
+
+    // Disable MFA
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        mfaEnabled: false,
+        mfaSecret: null,
+      },
+    });
+
+    // Create audit log
+    await this.prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'MFA_DISABLED',
+        entityType: 'User',
+        entityId: user.id,
+        ipAddress: '127.0.0.1',
+        metadata: { email: user.email },
+      },
+    });
+
+    return { message: 'MFA disabled successfully' };
+  }
+
+  async validateMFALogin(userId: string, token: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.mfaEnabled || !user.mfaSecret) {
+      throw new BadRequestException('MFA validation failed');
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: user.mfaSecret,
+      encoding: 'base32',
+      token,
+      window: 2,
+    });
+
+    if (!verified) {
+      throw new UnauthorizedException('Invalid MFA code');
+    }
+
+    return true;
   }
 
   private async generateTokens(userId: string, email: string) {
