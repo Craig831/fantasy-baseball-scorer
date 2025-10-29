@@ -15,8 +15,19 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should render HTML welcome page', () => {
+      const mockResponse = {
+        type: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+
+      appController.getRoot(mockResponse as any);
+
+      expect(mockResponse.type).toHaveBeenCalledWith('text/html');
+      expect(mockResponse.send).toHaveBeenCalled();
+      const htmlContent = mockResponse.send.mock.calls[0][0];
+      expect(htmlContent).toContain('Fantasy Baseball Scorer');
+      expect(htmlContent).toContain('API Running');
     });
   });
 });

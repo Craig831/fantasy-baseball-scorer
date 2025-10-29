@@ -309,4 +309,269 @@ describe('AuthService', () => {
       ).rejects.toThrow(BadRequestException);
     });
   });
+
+  describe('setupMFA', () => {
+    it('should successfully setup MFA and return secret and QR code', async () => {
+      const userId = 'user-123';
+      const user = {
+        id: userId,
+        email: 'test@example.com',
+        mfaEnabled: false,
+        mfaSecret: null,
+      };
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+      mockPrismaService.user.update.mockResolvedValue({
+        ...user,
+        mfaSecret: 'BASE32SECRET',
+      });
+
+      const result = await service.setupMFA(userId);
+
+      expect(result).toHaveProperty('secret');
+      expect(result).toHaveProperty('qrCode');
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: { mfaSecret: expect.any(String) },
+      });
+    });
+
+    it('should throw BadRequestException if user not found', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.setupMFA('nonexistent')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException if MFA already enabled', async () => {
+      const user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        mfaEnabled: true,
+        mfaSecret: 'existing-secret',
+      };
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+
+      await expect(service.setupMFA('user-123')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('verifyMFA', () => {
+    it('should successfully verify MFA code and enable MFA', async () => {
+      const userId = 'user-123';
+      const token = '123456';
+      const user = {
+        id: userId,
+        email: 'test@example.com',
+        mfaEnabled: false,
+        mfaSecret: 'BASE32SECRET',
+      };
+
+      // Mock speakeasy verification
+      jest.spyOn(require('speakeasy').totp, 'verify').mockReturnValue(true);
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+      mockPrismaService.user.update.mockResolvedValue({
+        ...user,
+        mfaEnabled: true,
+      });
+      mockPrismaService.auditLog.create.mockResolvedValue({});
+
+      const result = await service.verifyMFA(userId, token);
+
+      expect(result.message).toBe('MFA enabled successfully');
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: { mfaEnabled: true },
+      });
+      expect(mockPrismaService.auditLog.create).toHaveBeenCalledWith({
+        data: {
+          userId: user.id,
+          action: 'MFA_ENABLED',
+          entityType: 'User',
+          entityId: user.id,
+          ipAddress: '127.0.0.1',
+          metadata: { email: user.email },
+        },
+      });
+    });
+
+    it('should throw BadRequestException if MFA setup not initiated', async () => {
+      const user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        mfaEnabled: false,
+        mfaSecret: null,
+      };
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+
+      await expect(service.verifyMFA('user-123', '123456')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException for invalid MFA code', async () => {
+      const user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        mfaEnabled: false,
+        mfaSecret: 'BASE32SECRET',
+      };
+
+      // Mock speakeasy verification to return false
+      jest.spyOn(require('speakeasy').totp, 'verify').mockReturnValue(false);
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+
+      await expect(service.verifyMFA('user-123', 'invalid')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('disableMFA', () => {
+    it('should successfully disable MFA with valid code', async () => {
+      const userId = 'user-123';
+      const token = '123456';
+      const user = {
+        id: userId,
+        email: 'test@example.com',
+        mfaEnabled: true,
+        mfaSecret: 'BASE32SECRET',
+      };
+
+      // Mock speakeasy verification
+      jest.spyOn(require('speakeasy').totp, 'verify').mockReturnValue(true);
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+      mockPrismaService.user.update.mockResolvedValue({
+        ...user,
+        mfaEnabled: false,
+        mfaSecret: null,
+      });
+      mockPrismaService.auditLog.create.mockResolvedValue({});
+
+      const result = await service.disableMFA(userId, token);
+
+      expect(result.message).toBe('MFA disabled successfully');
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: {
+          mfaEnabled: false,
+          mfaSecret: null,
+        },
+      });
+      expect(mockPrismaService.auditLog.create).toHaveBeenCalledWith({
+        data: {
+          userId: user.id,
+          action: 'MFA_DISABLED',
+          entityType: 'User',
+          entityId: user.id,
+          ipAddress: '127.0.0.1',
+          metadata: { email: user.email },
+        },
+      });
+    });
+
+    it('should throw BadRequestException if MFA not enabled', async () => {
+      const user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        mfaEnabled: false,
+        mfaSecret: null,
+      };
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+
+      await expect(service.disableMFA('user-123', '123456')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException for invalid MFA code', async () => {
+      const user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        mfaEnabled: true,
+        mfaSecret: 'BASE32SECRET',
+      };
+
+      // Mock speakeasy verification to return false
+      jest.spyOn(require('speakeasy').totp, 'verify').mockReturnValue(false);
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+
+      await expect(service.disableMFA('user-123', 'invalid')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('validateMFALogin', () => {
+    it('should successfully validate MFA code during login', async () => {
+      const userId = 'user-123';
+      const token = '123456';
+      const user = {
+        id: userId,
+        email: 'test@example.com',
+        mfaEnabled: true,
+        mfaSecret: 'BASE32SECRET',
+      };
+
+      // Mock speakeasy verification
+      jest.spyOn(require('speakeasy').totp, 'verify').mockReturnValue(true);
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+
+      const result = await service.validateMFALogin(userId, token);
+
+      expect(result).toBe(true);
+    });
+
+    it('should throw BadRequestException if user not found', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.validateMFALogin('nonexistent', '123456'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if MFA not enabled', async () => {
+      const user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        mfaEnabled: false,
+        mfaSecret: null,
+      };
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+
+      await expect(
+        service.validateMFALogin('user-123', '123456'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw UnauthorizedException for invalid MFA code', async () => {
+      const user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        mfaEnabled: true,
+        mfaSecret: 'BASE32SECRET',
+      };
+
+      // Mock speakeasy verification to return false
+      jest.spyOn(require('speakeasy').totp, 'verify').mockReturnValue(false);
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+
+      await expect(
+        service.validateMFALogin('user-123', 'invalid'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
 });

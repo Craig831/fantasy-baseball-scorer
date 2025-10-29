@@ -345,6 +345,9 @@ export class AuthService {
     });
 
     // Generate QR code
+    if (!secret.otpauth_url) {
+      throw new BadRequestException('Failed to generate MFA secret');
+    }
     const qrCodeDataUrl = await qrcode.toDataURL(secret.otpauth_url);
 
     return {
@@ -400,7 +403,7 @@ export class AuthService {
       where: { id: userId },
     });
 
-    if (!user || !user.mfaEnabled) {
+    if (!user || !user.mfaEnabled || !user.mfaSecret) {
       throw new BadRequestException('MFA is not enabled');
     }
 

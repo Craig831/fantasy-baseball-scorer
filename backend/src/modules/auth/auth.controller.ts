@@ -123,7 +123,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'MFA setup initiated' })
   @ApiResponse({ status: 400, description: 'MFA already enabled' })
   async setupMFA(@CurrentUser() user: any) {
-    const result = await this.authService.setupMFA(user.userId);
+    const result = await this.authService.setupMFA(user.id);
     return {
       data: result,
     };
@@ -137,7 +137,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'MFA enabled successfully' })
   @ApiResponse({ status: 400, description: 'Invalid MFA code' })
   async verifyMFA(@CurrentUser() user: any, @Body('token') token: string) {
-    const result = await this.authService.verifyMFA(user.userId, token);
+    const result = await this.authService.verifyMFA(user.id, token);
     return {
       data: result,
     };
@@ -151,7 +151,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'MFA disabled successfully' })
   @ApiResponse({ status: 400, description: 'Invalid MFA code or MFA not enabled' })
   async disableMFA(@CurrentUser() user: any, @Body('token') token: string) {
-    const result = await this.authService.disableMFA(user.userId, token);
+    const result = await this.authService.disableMFA(user.id, token);
     return {
       data: result,
     };

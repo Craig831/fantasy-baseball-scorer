@@ -27,7 +27,7 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async getProfile(@CurrentUser() user: any) {
-    const profile = await this.usersService.getUserProfile(user.userId);
+    const profile = await this.usersService.getUserProfile(user.id);
     return {
       data: profile,
     };
@@ -43,7 +43,7 @@ export class UsersController {
     @Body() updateDto: UpdateUserDto,
   ) {
     const updatedUser = await this.usersService.updateUserProfile(
-      user.userId,
+      user.id,
       updateDto,
     );
     return {
@@ -57,7 +57,7 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Account deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteAccount(@CurrentUser() user: any) {
-    const result = await this.usersService.deleteAccount(user.userId);
+    const result = await this.usersService.deleteAccount(user.id);
     return {
       data: result,
     };
