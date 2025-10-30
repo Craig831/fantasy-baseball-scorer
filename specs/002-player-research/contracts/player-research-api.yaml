@@ -1,0 +1,613 @@
+openapi: 3.0.3
+info:
+  title: Player Research API
+  description: API for searching, filtering, and analyzing MLB players with custom scoring
+  version: 1.0.0
+  contact:
+    name: Fantasy Baseball Scorer API
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+tags:
+  - name: Players
+    description: Player search and filtering operations
+  - name: Saved Searches
+    description: Saved search criteria management
+
+paths:
+  /players:
+    get:
+      tags:
+        - Players
+      summary: Search and filter players
+      description: Retrieve a paginated list of players matching filter criteria with calculated scores
+      operationId: searchPlayers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: position
+          in: query
+          description: Filter by player position
+          required: false
+          schema:
+            type: string
+            enum: [Pitcher, Catcher, First Base, Second Base, Third Base, Shortstop, Outfield, Designated Hitter]
+        - name: team
+          in: query
+          description: Filter by MLB team name
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by player status
+          required: false
+          schema:
+            type: string
+            enum: [active, inactive, retired]
+            default: active
+        - name: dateFrom
+          in: query
+          description: Start date for statistics period (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          description: End date for statistics period (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: sortBy
+          in: query
+          description: Field to sort by
+          required: false
+          schema:
+            type: string
+            enum: [score, name, position, team, homeRuns, rbi, avg, era, strikeouts]
+            default: score
+        - name: sortOrder
+          in: query
+          description: Sort direction
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of results per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: scoringConfigId
+          in: query
+          description: Scoring configuration ID for score calculations (uses user's active config if not provided)
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response with player list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerWithScore'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  meta:
+                    type: object
+                    properties:
+                      lastUpdated:
+                        type: string
+                        format: date-time
+                        description: Timestamp of last statistics update
+                      scoringConfigName:
+                        type: string
+                        description: Name of scoring configuration used
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /players/{id}:
+    get:
+      tags:
+        - Players
+      summary: Get player details
+      description: Retrieve detailed information for a specific player
+      operationId: getPlayerById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Player UUID
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: season
+          in: query
+          description: Season year for statistics
+          required: false
+          schema:
+            type: integer
+            minimum: 1876
+      responses:
+        '200':
+          description: Successful response with player details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PlayerDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /players/{id}/score-breakdown:
+    get:
+      tags:
+        - Players
+      summary: Get player scoring breakdown
+      description: Retrieve detailed breakdown of how a player's score is calculated
+      operationId: getPlayerScoreBreakdown
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Player UUID
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: scoringConfigId
+          in: query
+          description: Scoring configuration ID (uses user's active config if not provided)
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: dateFrom
+          in: query
+          description: Start date for statistics period
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          description: End date for statistics period
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successful response with score breakdown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ScoreBreakdown'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /saved-searches:
+    get:
+      tags:
+        - Saved Searches
+      summary: List user's saved searches
+      description: Retrieve all saved searches for the authenticated user
+      operationId: listSavedSearches
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response with saved searches list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SavedSearch'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Saved Searches
+      summary: Create saved search
+      description: Save a filter combination for quick reuse
+      operationId: createSavedSearch
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSavedSearchDto'
+      responses:
+        '201':
+          description: Saved search created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SavedSearch'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /saved-searches/{id}:
+    put:
+      tags:
+        - Saved Searches
+      summary: Update saved search
+      description: Update an existing saved search
+      operationId: updateSavedSearch
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Saved search UUID
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSavedSearchDto'
+      responses:
+        '200':
+          description: Saved search updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SavedSearch'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags:
+        - Saved Searches
+      summary: Delete saved search
+      description: Remove a saved search
+      operationId: deleteSavedSearch
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Saved search UUID
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Saved search deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Saved search deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    PlayerWithScore:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mlbPlayerId:
+          type: integer
+        name:
+          type: string
+        position:
+          type: string
+        team:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, retired]
+        score:
+          type: number
+          format: float
+          nullable: true
+          description: Calculated score based on scoring configuration (null if no config)
+        statistics:
+          type: object
+          description: Abbreviated statistics for the specified period
+          additionalProperties: true
+        lastUpdated:
+          type: string
+          format: date-time
+
+    PlayerDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mlbPlayerId:
+          type: integer
+        name:
+          type: string
+        position:
+          type: string
+        team:
+          type: string
+        status:
+          type: string
+        lastUpdated:
+          type: string
+          format: date-time
+        statistics:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerStatistic'
+
+    PlayerStatistic:
+      type: object
+      properties:
+        season:
+          type: integer
+        statisticType:
+          type: string
+          enum: [batting, pitching]
+        dateFrom:
+          type: string
+          format: date
+        dateTo:
+          type: string
+          format: date
+        statistics:
+          type: object
+          additionalProperties: true
+
+    ScoreBreakdown:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        playerName:
+          type: string
+        totalScore:
+          type: number
+          format: float
+        scoringConfigurationName:
+          type: string
+        period:
+          type: object
+          properties:
+            dateFrom:
+              type: string
+              format: date
+            dateTo:
+              type: string
+              format: date
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              statistic:
+                type: string
+                description: Name of the statistic
+              value:
+                type: number
+                description: Player's value for this statistic
+              points:
+                type: number
+                description: Points per unit for this statistic
+              score:
+                type: number
+                description: Calculated score (value × points)
+
+    SavedSearch:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        filters:
+          type: object
+          additionalProperties: true
+        scoringConfigurationId:
+          type: string
+          format: uuid
+          nullable: true
+        scoringConfigurationName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateSavedSearchDto:
+      type: object
+      required:
+        - name
+        - filters
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        filters:
+          type: object
+          properties:
+            position:
+              type: string
+            team:
+              type: string
+            status:
+              type: string
+            dateFrom:
+              type: string
+              format: date
+            dateTo:
+              type: string
+              format: date
+            sortBy:
+              type: string
+            sortOrder:
+              type: string
+          additionalProperties: false
+        scoringConfigurationId:
+          type: string
+          format: uuid
+          nullable: true
+
+    UpdateSavedSearchDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        filters:
+          type: object
+          additionalProperties: true
+        scoringConfigurationId:
+          type: string
+          format: uuid
+          nullable: true
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        message:
+          type: string
+        error:
+          type: string
+
+    ValidationError:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 422
+        message:
+          type: array
+          items:
+            type: string
+        error:
+          type: string
+          example: Unprocessable Entity
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'

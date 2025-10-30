@@ -25,6 +25,7 @@ model User {
   lineups                   Lineup[]
   auditLogs                 AuditLog[]
   refreshTokens             RefreshToken[]
+  savedSearches             SavedSearch[]
 
   @@index([email], name: "idx_users_email")
   @@index([emailVerified], name: "idx_users_email_verified")
@@ -41,8 +42,9 @@ model ScoringConfiguration {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lineups    Lineup[]
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lineups       Lineup[]
+  savedSearches SavedSearch[]
 
   @@unique([userId, isActive], name: "unique_active_config")
   @@index([userId], name: "idx_scoring_configs_user_id")
@@ -51,42 +53,46 @@ model ScoringConfiguration {
 }
 
 model Player {
-  id            String              @id @db.VarChar(50)
+  id            String              @id @default(uuid())
+  mlbPlayerId   Int                 @unique @map("mlb_player_id")
   name          String              @db.VarChar(255)
-  team          String              @db.VarChar(10)
+  team          String              @db.VarChar(50)
   position      String              @db.VarChar(20)
+  status        String              @default("active") @db.VarChar(20)
   jerseyNumber  Int?                @map("jersey_number")
-  active        Boolean             @default(true)
   season        Int
+  lastUpdated   DateTime            @default(now()) @map("last_updated")
   createdAt     DateTime            @default(now()) @map("created_at")
   updatedAt     DateTime            @updatedAt @map("updated_at")
-  syncedAt      DateTime            @default(now()) @map("synced_at")
 
   statistics    PlayerStatistic[]
   lineupSlots   LineupSlot[]
 
-  @@index([team, position], name: "idx_players_team_position")
-  @@index([active, season], name: "idx_players_active_season")
-  @@index([syncedAt], name: "idx_players_synced_at")
+  @@index([position], name: "idx_players_position")
+  @@index([team], name: "idx_players_team")
+  @@index([status], name: "idx_players_status")
+  @@index([position, team], name: "idx_players_position_team")
+  @@index([season], name: "idx_players_season")
   @@map("players")
 }
 
 model PlayerStatistic {
   id            String   @id @default(uuid())
-  playerId      String   @map("player_id") @db.VarChar(50)
-  statDate      DateTime @map("stat_date") @db.Date
-  opponent      String?  @db.VarChar(10)
-  isSeasonTotal Boolean  @default(false) @map("is_season_total")
-  battingStats  Json     @default("{}") @map("batting_stats")
-  pitchingStats Json     @default("{}") @map("pitching_stats")
+  playerId      String   @map("player_id")
+  season        Int
+  statisticType String   @map("statistic_type") @db.VarChar(20)
+  statistics    Json
+  dateFrom      DateTime @map("date_from") @db.Date
+  dateTo        DateTime @map("date_to") @db.Date
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   player        Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
-  @@unique([playerId, statDate, opponent], name: "unique_player_game")
-  @@index([playerId, statDate], name: "idx_player_stats_player_date")
-  @@index([isSeasonTotal], name: "idx_player_stats_season_total")
+  @@unique([playerId, season, statisticType, dateFrom, dateTo], name: "unique_player_season_stats")
+  @@index([playerId], name: "idx_player_stats_player_id")
+  @@index([season], name: "idx_player_stats_season")
+  @@index([dateFrom, dateTo], name: "idx_player_stats_dates")
   @@map("player_statistics")
 }
 
@@ -116,7 +122,7 @@ model LineupSlot {
   id             String   @id @default(uuid())
   lineupId       String   @map("lineup_id")
   slotOrder      Int      @map("slot_order")
-  playerId       String?  @map("player_id") @db.VarChar(50)
+  playerId       String?  @map("player_id")
   projectedScore Decimal  @default(0.0) @map("projected_score") @db.Decimal(10, 2)
   actualScore    Decimal? @map("actual_score") @db.Decimal(10, 2)
   locked         Boolean  @default(false)
@@ -167,4 +173,21 @@ model RefreshToken {
   @@index([userId], name: "idx_refresh_tokens_user_id")
   @@index([expiresAt], name: "idx_refresh_tokens_expires_at")
   @@map("refresh_tokens")
+}
+
+model SavedSearch {
+  id                      String                  @id @default(uuid())
+  userId                  String                  @map("user_id")
+  name                    String                  @db.VarChar(100)
+  filters                 Json
+  scoringConfigurationId  String?                 @map("scoring_configuration_id")
+  createdAt               DateTime                @default(now()) @map("created_at")
+  updatedAt               DateTime                @updatedAt @map("updated_at")
+
+  user                    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scoringConfiguration    ScoringConfiguration?   @relation(fields: [scoringConfigurationId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, name], name: "unique_user_search_name")
+  @@index([userId], name: "idx_saved_searches_user_id")
+  @@map("saved_searches")
 }
