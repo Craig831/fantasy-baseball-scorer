@@ -60,4 +60,86 @@ api.interceptors.response.use(
   }
 );
 
+// ====================
+// Player Research APIs
+// ====================
+
+import { Player, PlayerSearchFilters } from '../types/player';
+
+export interface SearchPlayersResponse {
+  players: Player[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+/**
+ * Search and filter players
+ */
+export const searchPlayers = async (
+  filters: PlayerSearchFilters,
+  page: number = 1,
+  limit: number = 50
+): Promise<SearchPlayersResponse> => {
+  const params: any = {
+    page,
+    limit,
+  };
+
+  if (filters.position && filters.position.length > 0) {
+    params.position = filters.position;
+  }
+
+  if (filters.team && filters.team.length > 0) {
+    params.team = filters.team;
+  }
+
+  if (filters.status) {
+    params.status = filters.status;
+  }
+
+  if (filters.season) {
+    params.season = filters.season;
+  }
+
+  if (filters.dateFrom) {
+    params.dateFrom = filters.dateFrom;
+  }
+
+  if (filters.dateTo) {
+    params.dateTo = filters.dateTo;
+  }
+
+  const response = await api.get('/players', { params });
+  return response.data;
+};
+
+/**
+ * Get player details by ID
+ */
+export const getPlayerById = async (id: string): Promise<Player> => {
+  const response = await api.get(`/players/${id}`);
+  return response.data;
+};
+
+/**
+ * Get list of unique teams for filter dropdown
+ */
+export const getTeams = async (): Promise<string[]> => {
+  const response = await api.get('/players/filters/teams');
+  return response.data;
+};
+
+/**
+ * Get list of unique positions for filter dropdown
+ */
+export const getPositions = async (): Promise<string[]> => {
+  const response = await api.get('/players/filters/positions');
+  return response.data;
+};
+
 export default api;

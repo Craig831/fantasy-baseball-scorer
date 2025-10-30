@@ -61,25 +61,25 @@
 
 ### Backend Implementation
 
-- [ ] T016 [P] [US1] Create Player entity and DTO in backend/src/modules/players/entities/player.entity.ts
-- [ ] T017 [P] [US1] Create PlayerStatistic entity and DTO in backend/src/modules/players/entities/player-statistic.entity.ts
-- [ ] T018 [US1] Create SearchPlayersDto with filter parameters in backend/src/modules/player-research/dto/search-players.dto.ts
-- [ ] T019 [US1] Implement PlayersService.findAll() with filtering logic in backend/src/modules/players/players.service.ts
-- [ ] T020 [US1] Add database indices for position, team, and date range in Prisma schema (if not done in T001)
-- [ ] T021 [US1] Implement GET /api/players endpoint in backend/src/modules/player-research/player-research.controller.ts
-- [ ] T022 [P] [US1] Implement GET /api/players/:id endpoint for player details in backend/src/modules/player-research/player-research.controller.ts
-- [ ] T023 [P] [US1] Add pagination support to search endpoint (page, limit parameters)
+- [X] T016 [P] [US1] Create Player entity and DTO in backend/src/modules/players/entities/player.entity.ts
+- [X] T017 [P] [US1] Create PlayerStatistic entity and DTO in backend/src/modules/players/entities/player-statistic.entity.ts
+- [X] T018 [US1] Create SearchPlayersDto with filter parameters in backend/src/modules/player-research/dto/search-players.dto.ts
+- [X] T019 [US1] Implement PlayersService.findAll() with filtering logic in backend/src/modules/players/players.service.ts
+- [X] T020 [US1] Add database indices for position, team, and date range in Prisma schema (if not done in T001)
+- [X] T021 [US1] Implement GET /api/players endpoint in backend/src/modules/player-research/player-research.controller.ts
+- [X] T022 [P] [US1] Implement GET /api/players/:id endpoint for player details in backend/src/modules/player-research/player-research.controller.ts
+- [X] T023 [P] [US1] Add pagination support to search endpoint (page, limit parameters)
 
 ### Frontend Implementation
 
-- [ ] T024 [P] [US1] Create PlayerResearch page component in frontend/src/pages/PlayerResearch.tsx
-- [ ] T025 [P] [US1] Create FilterPanel component with position, team, date range controls in frontend/src/components/player-research/FilterPanel.tsx
-- [ ] T026 [P] [US1] Create PlayerList component to display search results in frontend/src/components/player-research/PlayerList.tsx
-- [ ] T027 [P] [US1] Create PlayerCard component for individual player display in frontend/src/components/player-research/PlayerCard.tsx
-- [ ] T028 [US1] Implement API service methods for player search in frontend/src/services/api.ts
-- [ ] T029 [US1] Connect FilterPanel to API and update PlayerList on filter changes
-- [ ] T030 [P] [US1] Implement pagination controls in PlayerList component
-- [ ] T031 [P] [US1] Add loading states and error handling to PlayerResearch page
+- [X] T024 [P] [US1] Create PlayerResearch page component in frontend/src/pages/PlayerResearch.tsx
+- [X] T025 [P] [US1] Create FilterPanel component with position, team, date range controls in frontend/src/components/player-research/FilterPanel.tsx
+- [X] T026 [P] [US1] Create PlayerList component to display search results in frontend/src/components/player-research/PlayerList.tsx
+- [X] T027 [P] [US1] Create PlayerCard component for individual player display in frontend/src/components/player-research/PlayerCard.tsx
+- [X] T028 [US1] Implement API service methods for player search in frontend/src/services/api.ts
+- [X] T029 [US1] Connect FilterPanel to API and update PlayerList on filter changes
+- [X] T030 [P] [US1] Implement pagination controls in PlayerList component
+- [X] T031 [P] [US1] Add loading states and error handling to PlayerResearch page
 
 ### Testing
 
