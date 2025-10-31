@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsOptional,
@@ -10,6 +10,7 @@ import {
   IsDateString,
   IsEnum,
 } from 'class-validator';
+import { Player } from '../../players/entities/player.entity';
 
 export enum PlayerStatus {
   ACTIVE = 'active',
@@ -122,7 +123,3 @@ export class SearchPlayersResponseDto {
     hasMore: boolean;
   };
 }
-
-// Re-export Player entity for the response DTO
-import { Player } from '../../players/entities/player.entity';
-import { ApiProperty } from '@nestjs/swagger';
