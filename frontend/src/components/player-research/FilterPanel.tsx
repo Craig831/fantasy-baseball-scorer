@@ -5,26 +5,31 @@ import './FilterPanel.css';
 interface FilterPanelProps {
   filters: PlayerSearchFilters;
   onFilterChange: (filters: PlayerSearchFilters) => void;
-  teams: string[];
   positions: string[];
-  onLoadTeams: () => void;
   onLoadPositions: () => void;
 }
+
+const HITTING_POSITIONS = ['C', '1B', '2B', '3B', 'SS', 'OF', 'LF', 'CF', 'RF', 'DH'];
+const PITCHING_POSITIONS = ['P'];
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
   filters,
   onFilterChange,
-  teams,
   positions,
-  onLoadTeams,
   onLoadPositions,
 }) => {
   const [localFilters, setLocalFilters] = useState<PlayerSearchFilters>(filters);
+  const [statisticType, setStatisticType] = useState<'hitting' | 'pitching'>('hitting');
 
   useEffect(() => {
-    onLoadTeams();
     onLoadPositions();
-  }, [onLoadTeams, onLoadPositions]);
+  }, [onLoadPositions]);
+
+  const handleStatisticTypeChange = (type: 'hitting' | 'pitching') => {
+    setStatisticType(type);
+    // Clear position filter when switching stat type
+    setLocalFilters({ ...localFilters, position: [], statisticType: type });
+  };
 
   const handlePositionChange = (position: string) => {
     const currentPositions = localFilters.position || [];
@@ -35,15 +40,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     setLocalFilters({ ...localFilters, position: newPositions });
   };
 
-  const handleTeamChange = (team: string) => {
-    const currentTeams = localFilters.team || [];
-    const newTeams = currentTeams.includes(team)
-      ? currentTeams.filter((t) => t !== team)
-      : [...currentTeams, team];
-
-    setLocalFilters({ ...localFilters, team: newTeams });
-  };
-
   const handleApplyFilters = () => {
     onFilterChange(localFilters);
   };
@@ -51,22 +47,45 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   const handleClearFilters = () => {
     const cleared: PlayerSearchFilters = {
       position: [],
-      team: [],
+      league: 'both',
+      statisticType: 'hitting',
       status: undefined,
       season: new Date().getFullYear(),
     };
     setLocalFilters(cleared);
+    setStatisticType('hitting');
     onFilterChange(cleared);
   };
+
+  // Get positions based on current statistic type
+  const availablePositions = statisticType === 'hitting' ? HITTING_POSITIONS : PITCHING_POSITIONS;
 
   return (
     <div className="filter-panel">
       <h3>Filter Players</h3>
 
       <div className="filter-section">
+        <label>Statistic Type</label>
+        <div className="toggle-group">
+          <button
+            className={`toggle-button ${statisticType === 'hitting' ? 'active' : ''}`}
+            onClick={() => handleStatisticTypeChange('hitting')}
+          >
+            Hitting
+          </button>
+          <button
+            className={`toggle-button ${statisticType === 'pitching' ? 'active' : ''}`}
+            onClick={() => handleStatisticTypeChange('pitching')}
+          >
+            Pitching
+          </button>
+        </div>
+      </div>
+
+      <div className="filter-section">
         <label>Position</label>
         <div className="checkbox-group">
-          {positions.map((pos) => (
+          {availablePositions.map((pos) => (
             <label key={pos} className="checkbox-label">
               <input
                 type="checkbox"
@@ -80,19 +99,16 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       </div>
 
       <div className="filter-section">
-        <label>Team</label>
-        <div className="checkbox-group scrollable">
-          {teams.map((team) => (
-            <label key={team} className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={localFilters.team?.includes(team) || false}
-                onChange={() => handleTeamChange(team)}
-              />
-              {team}
-            </label>
-          ))}
-        </div>
+        <label htmlFor="league">League</label>
+        <select
+          id="league"
+          value={localFilters.league || 'both'}
+          onChange={(e) => setLocalFilters({ ...localFilters, league: e.target.value as 'both' | 'AL' | 'NL' })}
+        >
+          <option value="both">Both</option>
+          <option value="AL">AL Only</option>
+          <option value="NL">NL Only</option>
+        </select>
       </div>
 
       <div className="filter-section">
@@ -120,6 +136,26 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           <option value="inactive">Inactive</option>
           <option value="injured">Injured</option>
         </select>
+      </div>
+
+      <div className="filter-section">
+        <label htmlFor="dateFrom">Stats From Date</label>
+        <input
+          type="date"
+          id="dateFrom"
+          value={localFilters.dateFrom || ''}
+          onChange={(e) => setLocalFilters({ ...localFilters, dateFrom: e.target.value })}
+        />
+      </div>
+
+      <div className="filter-section">
+        <label htmlFor="dateTo">Stats To Date</label>
+        <input
+          type="date"
+          id="dateTo"
+          value={localFilters.dateTo || ''}
+          onChange={(e) => setLocalFilters({ ...localFilters, dateTo: e.target.value })}
+        />
       </div>
 
       <div className="filter-actions">

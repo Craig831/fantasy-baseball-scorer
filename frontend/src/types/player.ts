@@ -3,11 +3,23 @@
  * Aligned with backend Prisma models
  */
 
+export interface Team {
+  id: string;
+  mlbTeamId: number;
+  name: string;
+  abbreviation: string;
+  league: string; // 'AL' or 'NL'
+  division: string;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+}
+
 export interface Player {
   id: string;
   mlbPlayerId: number;
   name: string;
-  team: string;
+  teamId: string;
+  team?: Team; // Populated when included in query
   position: string;
   status: string;
   jerseyNumber?: number;
@@ -15,6 +27,7 @@ export interface Player {
   lastUpdated: string; // ISO date string
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
+  score?: number; // Calculated score from scoring configuration
 }
 
 export interface PlayerStatistic {
@@ -79,7 +92,8 @@ export interface SavedSearch {
 
 export interface PlayerSearchFilters {
   position?: string[];
-  team?: string[];
+  league?: 'both' | 'AL' | 'NL'; // League filter
+  statisticType?: 'hitting' | 'pitching'; // Stats type for display
   dateFrom?: string; // ISO date string
   dateTo?: string; // ISO date string
   status?: string;
@@ -89,6 +103,8 @@ export interface PlayerSearchFilters {
 export interface PlayerWithScore extends Player {
   score?: number;
   statistics?: PlayerStatistic[];
+  battingStats?: BattingStats;
+  pitchingStats?: PitchingStats;
 }
 
 export interface ScoreBreakdown {

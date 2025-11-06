@@ -5,6 +5,10 @@ import { PlayersService } from '../players/players.service';
 import { SearchPlayersDto, SearchPlayersResponseDto } from './dto/search-players.dto';
 import { Player } from '../players/entities/player.entity';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ScoreCalculationService } from './services/score-calculation.service';
+import { ScoreBreakdownDto } from './dto/score-breakdown.dto';
+import { ScoringConfigsService } from '../scoring-configs/scoring-configs.service';
 
 @ApiTags('player-research')
 @Controller('players')
@@ -14,6 +18,8 @@ export class PlayerResearchController {
   constructor(
     private readonly playerResearchService: PlayerResearchService,
     private readonly playersService: PlayersService,
+    private readonly scoreCalculationService: ScoreCalculationService,
+    private readonly scoringConfigsService: ScoringConfigsService,
   ) {}
 
   /**
@@ -27,9 +33,10 @@ export class PlayerResearchController {
     type: SearchPlayersResponseDto,
   })
   async searchPlayers(
+    @CurrentUser() user: any,
     @Query() filters: SearchPlayersDto,
   ): Promise<SearchPlayersResponseDto> {
-    const { players, total } = await this.playersService.findAll(filters);
+    const { players, total } = await this.playersService.findAll(filters, user.id);
 
     const page = filters.page || 1;
     const limit = filters.limit || 50;
@@ -45,6 +52,50 @@ export class PlayerResearchController {
         hasMore: page < totalPages,
       },
     };
+  }
+
+  /**
+   * Get detailed score breakdown for a player
+   */
+  @Get(':id/score-breakdown')
+  @ApiOperation({ summary: 'Get detailed score breakdown for a player' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns detailed score breakdown',
+    type: ScoreBreakdownDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Player or scoring configuration not found',
+  })
+  async getScoreBreakdown(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Query('scoringConfigId') scoringConfigId: string,
+  ): Promise<ScoreBreakdownDto> {
+    // Fetch player with statistics
+    const player = await this.playersService.findOne(id);
+    if (!player) {
+      throw new Error('Player not found');
+    }
+
+    // Fetch scoring configuration
+    const config = await this.scoringConfigsService.findOne(
+      user.id,
+      scoringConfigId,
+    );
+
+    // Calculate score breakdown
+    const breakdown = this.scoreCalculationService.calculatePlayerScore(
+      player as any,
+      config as any,
+    );
+
+    if (!breakdown) {
+      throw new Error('Unable to calculate score for this player');
+    }
+
+    return breakdown;
   }
 
   /**

@@ -1,0 +1,61 @@
+.scoring-config-selector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.scoring-config-selector label {
+  font-weight: 500;
+  color: #212529;
+  white-space: nowrap;
+}
+
+.scoring-config-selector .config-select {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.scoring-config-selector .config-select:hover {
+  border-color: #80bdff;
+}
+
+.scoring-config-selector .config-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.scoring-config-selector .loading,
+.scoring-config-selector .error {
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.scoring-config-selector .error {
+  color: #dc3545;
+}
+
+.scoring-config-selector .loading {
+  color: #6c757d;
+}
+
+@media (max-width: 768px) {
+  .scoring-config-selector {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .scoring-config-selector label {
+    margin-bottom: 0.5rem;
+  }
+}

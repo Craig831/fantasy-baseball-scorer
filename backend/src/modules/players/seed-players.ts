@@ -22,6 +22,27 @@ interface PlayerSeedStats {
   errors: number;
 }
 
+// Team name mapping cache
+let teamNameToIdMap: Map<string, string> | null = null;
+
+/**
+ * Load teams from database and create name -> ID mapping
+ */
+async function loadTeamMapping(): Promise<Map<string, string>> {
+  if (teamNameToIdMap) {
+    return teamNameToIdMap;
+  }
+
+  const teams = await prisma.team.findMany({
+    select: { id: true, name: true },
+  });
+
+  teamNameToIdMap = new Map(teams.map(t => [t.name, t.id]));
+  console.log(`Loaded ${teamNameToIdMap.size} teams from database`);
+
+  return teamNameToIdMap;
+}
+
 /**
  * Fetch all players from MLB-StatsAPI for a given season
  */
@@ -49,15 +70,24 @@ async function fetchMlbPlayers(season: number): Promise<MlbPlayerDto[]> {
 async function seedPlayer(
   mlbPlayer: MlbPlayerDto,
   season: number,
+  teamMap: Map<string, string>,
 ): Promise<'created' | 'updated' | 'skipped'> {
   try {
     // Extract player data
     const mlbPlayerId = mlbPlayer.id;
     const name = mlbPlayer.fullName;
-    const team = mlbPlayer.currentTeam?.name || 'Free Agent';
+    const teamName = mlbPlayer.currentTeam?.name;
     const position = mlbPlayer.primaryPosition?.abbreviation || mlbPlayer.primaryPosition?.code || 'UTIL';
     const status = mlbPlayer.active ? 'active' : 'inactive';
     const jerseyNumber = mlbPlayer.primaryNumber ? parseInt(mlbPlayer.primaryNumber, 10) : null;
+
+    // Find team ID from team name
+    const teamId = teamName ? teamMap.get(teamName) : null;
+
+    if (!teamId) {
+      // Skip players without a valid team (free agents, etc.)
+      return 'skipped';
+    }
 
     // Check if player already exists
     const existing = await prisma.player.findUnique({
@@ -70,7 +100,7 @@ async function seedPlayer(
         where: { mlbPlayerId },
         data: {
           name,
-          team,
+          teamId,
           position,
           status,
           jerseyNumber,
@@ -85,7 +115,7 @@ async function seedPlayer(
         data: {
           mlbPlayerId,
           name,
-          team,
+          teamId,
           position,
           status,
           jerseyNumber,
@@ -120,6 +150,9 @@ async function seedPlayers(season: number): Promise<void> {
   };
 
   try {
+    // Load team mapping
+    const teamMap = await loadTeamMapping();
+
     // Fetch players from MLB API
     const mlbPlayers = await fetchMlbPlayers(season);
     stats.total = mlbPlayers.length;
@@ -131,7 +164,7 @@ async function seedPlayers(season: number): Promise<void> {
       const mlbPlayer = mlbPlayers[i];
 
       try {
-        const result = await seedPlayer(mlbPlayer, season);
+        const result = await seedPlayer(mlbPlayer, season, teamMap);
 
         if (result === 'created') {
           stats.created++;

@@ -5,42 +5,52 @@ import './PlayerCard.css';
 interface PlayerCardProps {
   player: Player;
   onClick?: () => void;
+  onScoreClick?: () => void;
+  statisticType: 'hitting' | 'pitching';
 }
 
-const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
+const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick, onScoreClick, statisticType }) => {
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Don't trigger row onClick if clicking on score
+    if ((e.target as HTMLElement).closest('.score-cell')) {
+      return;
+    }
+    onClick?.();
+  };
+
+  const handleScoreClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onScoreClick?.();
+  };
+
   return (
-    <div className="player-card" onClick={onClick}>
-      <div className="player-header">
-        <div className="player-name-section">
-          <h4>{player.name}</h4>
-          <span className="jersey-number">#{player.jerseyNumber || '--'}</span>
+    <tr className="player-row" onClick={handleRowClick}>
+      <td className="name-cell">
+        <div className="player-name">
+          {player.name}
+          {player.jerseyNumber && <span className="jersey-number">#{player.jerseyNumber}</span>}
         </div>
+      </td>
+      <td className="team-cell">
+        {player.team?.name || 'Unknown'}
+      </td>
+      <td className="position-cell">{player.position}</td>
+      <td className="status-cell">
         <span className={`status-badge status-${player.status}`}>
           {player.status}
         </span>
-      </div>
-
-      <div className="player-info">
-        <div className="info-row">
-          <span className="label">Team:</span>
-          <span className="value">{player.team}</span>
-        </div>
-        <div className="info-row">
-          <span className="label">Position:</span>
-          <span className="value">{player.position}</span>
-        </div>
-        <div className="info-row">
-          <span className="label">Season:</span>
-          <span className="value">{player.season}</span>
-        </div>
-      </div>
-
-      <div className="player-footer">
-        <span className="updated-time">
-          Updated: {new Date(player.lastUpdated).toLocaleDateString()}
-        </span>
-      </div>
-    </div>
+      </td>
+      <td className="season-cell">{player.season}</td>
+      <td className="score-cell" onClick={handleScoreClick}>
+        {player.score !== undefined ? (
+          <span className="score-value" title="Click for score breakdown">
+            {player.score.toFixed(1)}
+          </span>
+        ) : (
+          <span className="no-score">--</span>
+        )}
+      </td>
+    </tr>
   );
 };
 

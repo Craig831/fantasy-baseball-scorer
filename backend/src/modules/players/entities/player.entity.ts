@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Player as PrismaPlayer } from '@prisma/client';
+import { Team } from './team.entity';
 
 /**
  * Player entity representing a baseball player
@@ -24,10 +25,16 @@ export class Player implements Partial<PrismaPlayer> {
   name: string;
 
   @ApiProperty({
-    description: 'Team name',
-    example: 'Los Angeles Dodgers',
+    description: 'Team ID reference',
+    example: '123e4567-e89b-12d3-a456-426614174001',
   })
-  team: string;
+  teamId: string;
+
+  @ApiPropertyOptional({
+    description: 'Team information (populated when included)',
+    type: () => Team,
+  })
+  team?: Team;
 
   @ApiProperty({
     description: 'Primary position',
@@ -71,4 +78,10 @@ export class Player implements Partial<PrismaPlayer> {
     example: '2024-10-30T12:00:00.000Z',
   })
   updatedAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'Calculated score based on scoring configuration (if provided)',
+    example: 456.5,
+  })
+  score?: number;
 }

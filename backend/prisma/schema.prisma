@@ -52,11 +52,28 @@ model ScoringConfiguration {
   @@map("scoring_configurations")
 }
 
+model Team {
+  id            String   @id @default(uuid())
+  mlbTeamId     Int      @unique @map("mlb_team_id")
+  name          String   @unique @db.VarChar(100)
+  abbreviation  String   @db.VarChar(10)
+  league        String   @db.VarChar(2) // AL or NL
+  division      String   @db.VarChar(20)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  players       Player[]
+
+  @@index([league], name: "idx_teams_league")
+  @@index([abbreviation], name: "idx_teams_abbreviation")
+  @@map("teams")
+}
+
 model Player {
   id            String              @id @default(uuid())
   mlbPlayerId   Int                 @unique @map("mlb_player_id")
   name          String              @db.VarChar(255)
-  team          String              @db.VarChar(50)
+  teamId        String              @map("team_id")
   position      String              @db.VarChar(20)
   status        String              @default("active") @db.VarChar(20)
   jerseyNumber  Int?                @map("jersey_number")
@@ -65,13 +82,14 @@ model Player {
   createdAt     DateTime            @default(now()) @map("created_at")
   updatedAt     DateTime            @updatedAt @map("updated_at")
 
+  team          Team                @relation(fields: [teamId], references: [id])
   statistics    PlayerStatistic[]
   lineupSlots   LineupSlot[]
 
   @@index([position], name: "idx_players_position")
-  @@index([team], name: "idx_players_team")
+  @@index([teamId], name: "idx_players_team_id")
   @@index([status], name: "idx_players_status")
-  @@index([position, team], name: "idx_players_position_team")
+  @@index([position, teamId], name: "idx_players_position_team")
   @@index([season], name: "idx_players_season")
   @@map("players")
 }

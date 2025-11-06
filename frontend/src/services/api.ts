@@ -82,7 +82,8 @@ export interface SearchPlayersResponse {
 export const searchPlayers = async (
   filters: PlayerSearchFilters,
   page: number = 1,
-  limit: number = 50
+  limit: number = 50,
+  scoringConfigId?: string | null
 ): Promise<SearchPlayersResponse> => {
   const params: any = {
     page,
@@ -93,8 +94,12 @@ export const searchPlayers = async (
     params.position = filters.position;
   }
 
-  if (filters.team && filters.team.length > 0) {
-    params.team = filters.team;
+  if (filters.league) {
+    params.league = filters.league;
+  }
+
+  if (filters.statisticType) {
+    params.statisticType = filters.statisticType;
   }
 
   if (filters.status) {
@@ -113,7 +118,16 @@ export const searchPlayers = async (
     params.dateTo = filters.dateTo;
   }
 
-  const response = await api.get('/players', { params });
+  if (scoringConfigId) {
+    params.scoringConfigId = scoringConfigId;
+  }
+
+  const response = await api.get('/players', {
+    params,
+    paramsSerializer: {
+      indexes: null, // Use repeat format: position=1B&position=OF instead of position[]=1B
+    },
+  });
   return response.data;
 };
 
@@ -138,6 +152,19 @@ export const getTeams = async (): Promise<string[]> => {
  */
 export const getPositions = async (): Promise<string[]> => {
   const response = await api.get('/players/filters/positions');
+  return response.data;
+};
+
+/**
+ * Get detailed score breakdown for a player
+ */
+export const getPlayerScoreBreakdown = async (
+  playerId: string,
+  scoringConfigId: string
+): Promise<import('../types/player').ScoreBreakdown> => {
+  const response = await api.get(`/players/${playerId}/score-breakdown`, {
+    params: { scoringConfigId },
+  });
   return response.data;
 };
 

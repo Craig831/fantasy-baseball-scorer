@@ -3,40 +3,68 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SearchPlayersDto } from '../player-research/dto/search-players.dto';
 import { Player } from './entities/player.entity';
 import { Prisma } from '@prisma/client';
+import { ScoringConfigsService } from '../scoring-configs/scoring-configs.service';
+import { ScoreCalculationService } from '../player-research/services/score-calculation.service';
 
 @Injectable()
 export class PlayersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scoringConfigsService: ScoringConfigsService,
+    private readonly scoreCalculationService: ScoreCalculationService,
+  ) {}
 
   /**
    * Find all players with optional filtering and pagination
    * @param filters Search and filter criteria
+   * @param userId User ID for scoring config lookup (optional)
    * @returns Paginated list of players and metadata
    */
-  async findAll(filters: SearchPlayersDto): Promise<{
+  async findAll(
+    filters: SearchPlayersDto,
+    userId?: string,
+  ): Promise<{
     players: Player[];
     total: number;
   }> {
     const {
       position,
-      team,
+      league,
       status,
       season,
       dateFrom,
       dateTo,
       page = 1,
       limit = 50,
+      scoringConfigId,
+      statisticType,
     } = filters;
 
     // Build where clause for Prisma
     const where: Prisma.PlayerWhereInput = {};
 
-    if (position && position.length > 0) {
-      where.position = { in: position };
+    // Filter by statistic type and position
+    if (statisticType === 'hitting') {
+      // For hitting, exclude pitchers unless specifically selected
+      if (position && position.length > 0) {
+        where.position = { in: position };
+      } else {
+        where.position = { notIn: ['P'] };
+      }
+    } else if (statisticType === 'pitching') {
+      // For pitching, only include pitchers unless specifically selected
+      if (position && position.length > 0) {
+        where.position = { in: position };
+      } else {
+        where.position = { in: ['P'] };
+      }
     }
 
-    if (team && team.length > 0) {
-      where.team = { in: team };
+    // Filter by league
+    if (league && league !== 'both') {
+      where.team = {
+        league: league,
+      };
     }
 
     if (status) {
@@ -71,6 +99,7 @@ export class PlayersService {
           { name: 'asc' },
         ],
         include: {
+          team: true, // Include team information
           statistics: {
             where: {
               ...(dateFrom && { dateFrom: { gte: new Date(dateFrom) } }),
@@ -84,6 +113,33 @@ export class PlayersService {
       this.prisma.player.count({ where }),
     ]);
 
+    // Calculate scores if scoring config is provided
+    if (scoringConfigId && userId) {
+      try {
+        const config = await this.scoringConfigsService.findOne(
+          userId,
+          scoringConfigId,
+        );
+
+        // Calculate scores for all players
+        const scores = this.scoreCalculationService.calculatePlayerScores(
+          players as any,
+          config as any,
+        );
+
+        // Add scores to player objects
+        players.forEach((player) => {
+          const score = scores.get(player.id);
+          if (score !== undefined) {
+            (player as any).score = score;
+          }
+        });
+      } catch (error) {
+        // If scoring config fetch fails, just return players without scores
+        console.error('Failed to calculate scores:', error);
+      }
+    }
+
     return { players, total };
   }
 
@@ -96,6 +152,7 @@ export class PlayersService {
     return this.prisma.player.findUnique({
       where: { id },
       include: {
+        team: true,
         statistics: {
           orderBy: { season: 'desc' },
         },
@@ -108,14 +165,11 @@ export class PlayersService {
    * @returns List of unique team names
    */
   async getUniqueTeams(): Promise<string[]> {
-    const teams = await this.prisma.player.findMany({
-      where: { status: 'active' },
-      select: { team: true },
-      distinct: ['team'],
-      orderBy: { team: 'asc' },
+    const teams = await this.prisma.team.findMany({
+      orderBy: { name: 'asc' },
     });
 
-    return teams.map((t) => t.team);
+    return teams.map((t) => t.name);
   }
 
   /**

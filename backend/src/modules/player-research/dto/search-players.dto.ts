@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import {
   IsOptional,
   IsArray,
@@ -9,6 +9,7 @@ import {
   Max,
   IsDateString,
   IsEnum,
+  IsUUID,
 } from 'class-validator';
 import { Player } from '../../players/entities/player.entity';
 
@@ -28,19 +29,19 @@ export class SearchPlayersDto {
     type: [String],
   })
   @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
   @IsString({ each: true })
   position?: string[];
 
   @ApiPropertyOptional({
-    description: 'Filter by team names',
-    example: ['Los Angeles Dodgers', 'New York Yankees'],
-    type: [String],
+    description: 'Filter by league (AL, NL, or both)',
+    example: 'both',
+    enum: ['both', 'AL', 'NL'],
   })
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  team?: string[];
+  @IsString()
+  league?: string;
 
   @ApiPropertyOptional({
     description: 'Filter by player status',
@@ -100,6 +101,23 @@ export class SearchPlayersDto {
   @Min(1)
   @Max(100)
   limit?: number = 50;
+
+  @ApiPropertyOptional({
+    description: 'Scoring configuration ID to calculate player scores',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsOptional()
+  @IsUUID()
+  scoringConfigId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Statistic type filter (hitting or pitching)',
+    example: 'hitting',
+    enum: ['hitting', 'pitching'],
+  })
+  @IsOptional()
+  @IsString()
+  statisticType?: string;
 }
 
 /**

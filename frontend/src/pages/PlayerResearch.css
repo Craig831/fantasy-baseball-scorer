@@ -19,6 +19,17 @@
   font-size: 1rem;
 }
 
+.no-config-message {
+  padding: 1rem;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  color: #856404;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 500;
+}
+
 .page-content {
   display: grid;
   grid-template-columns: 300px 1fr;
