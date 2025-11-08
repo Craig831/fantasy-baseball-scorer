@@ -11,6 +11,7 @@ import { ScoringConfigsModule } from './modules/scoring-configs/scoring-configs.
 import { PlayersModule } from './modules/players/players.module';
 import { PlayerResearchModule } from './modules/player-research/player-research.module';
 import { MlbStatsModule } from './modules/mlb-stats/mlb-stats.module';
+import { LineupsModule } from './modules/lineups/lineups.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
@@ -30,6 +31,7 @@ import jwtConfig from './config/jwt.config';
     MlbStatsModule,
     PlayersModule,
     PlayerResearchModule,
+    LineupsModule,
   ],
   controllers: [AppController],
   providers: [
