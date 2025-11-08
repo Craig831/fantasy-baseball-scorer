@@ -2,6 +2,8 @@
  * Accessibility utilities for WCAG 2.1 Level AA compliance
  */
 
+import React from 'react';
+
 // Generate unique IDs for ARIA associations
 let idCounter = 0;
 export const generateA11yId = (prefix: string): string => {
@@ -184,21 +186,6 @@ export const setFocusTo = (
       element.focus();
     }
   }, delay);
-};
-
-/**
- * Create skip link for keyboard navigation
- * Place at the very top of your app
- */
-export const SkipLink: React.FC = () => {
-  return (
-    <a
-      href="#main-content"
-      className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50 focus:p-4 focus:bg-blue-600 focus:text-white"
-    >
-      Skip to main content
-    </a>
-  );
 };
 
 /**
