@@ -158,30 +158,24 @@ export const LineupEditor: React.FC<LineupEditorProps> = ({ lineupId }) => {
 
   if (isLoadingLineup) {
     return (
-      <div className="lineup-editor lineup-editor--loading">
-        <div className="lineup-editor__spinner">Loading lineup...</div>
+      <div className="flex items-center justify-center py-12">
+        <div className="text-lg text-gray-600">Loading lineup...</div>
       </div>
     );
   }
 
   return (
-    <div className="lineup-editor">
-      <div className="lineup-editor__header">
-        <h2 className="lineup-editor__title">
-          {isEditMode ? 'Edit Lineup' : 'Create New Lineup'}
-        </h2>
-      </div>
-
-      <form className="lineup-editor__form" onSubmit={handleSubmit}>
-        <div className="lineup-editor__section">
-          <div className="lineup-editor__form-group">
-            <label htmlFor="lineup-name" className="lineup-editor__label">
+    <div className="bg-white shadow rounded-lg">
+      <form className="px-4 py-5 sm:p-6" onSubmit={handleSubmit}>
+        <div className="space-y-6">
+          <div>
+            <label htmlFor="lineup-name" className="block text-sm font-medium text-gray-700">
               Lineup Name *
             </label>
             <input
               type="text"
               id="lineup-name"
-              className="lineup-editor__input"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={100}
@@ -190,32 +184,32 @@ export const LineupEditor: React.FC<LineupEditorProps> = ({ lineupId }) => {
               aria-invalid={!!errors.name}
             />
             {errors.name && (
-              <div className="lineup-editor__error">{errors.name}</div>
+              <div className="mt-2 text-sm text-red-600">{errors.name}</div>
             )}
           </div>
 
-          <div className="lineup-editor__form-group">
-            <label htmlFor="lineup-date" className="lineup-editor__label">
+          <div>
+            <label htmlFor="lineup-date" className="block text-sm font-medium text-gray-700">
               Game Date (Optional)
             </label>
             <input
               type="date"
               id="lineup-date"
-              className="lineup-editor__input"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               value={gameDate}
               onChange={(e) => setGameDate(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="lineup-editor__section">
-          <h3 className="lineup-editor__section-title">
+        <div className="mt-8">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
             Players ({slots.filter((s) => s.player).length} / 25)
           </h3>
           {errors.slots && (
-            <div className="lineup-editor__error">{errors.slots}</div>
+            <div className="mb-4 text-sm text-red-600">{errors.slots}</div>
           )}
-          <div className="lineup-editor__slots">
+          <div className="space-y-2">
             {slots.map((slot) => (
               <LineupSlot
                 key={slot.slotOrder}
@@ -230,22 +224,22 @@ export const LineupEditor: React.FC<LineupEditorProps> = ({ lineupId }) => {
         </div>
 
         {errors.submit && (
-          <div className="lineup-editor__error lineup-editor__error--submit">
+          <div className="mt-4 text-sm text-red-600">
             {errors.submit}
           </div>
         )}
 
-        <div className="lineup-editor__actions">
+        <div className="mt-6 flex items-center justify-end space-x-3">
           <button
             type="button"
-            className="lineup-editor__btn lineup-editor__btn--cancel"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             onClick={handleCancel}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="lineup-editor__btn lineup-editor__btn--submit"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             disabled={createMutation.isPending || updateMutation.isPending}
           >
             {createMutation.isPending || updateMutation.isPending
