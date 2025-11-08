@@ -100,14 +100,17 @@ const HomePage: React.FC = () => {
                     </p>
                   </div>
                 </button>
-                <div className="bg-purple-50 overflow-hidden shadow rounded-lg opacity-50">
+                <button
+                  onClick={() => navigate('/lineups')}
+                  className="bg-purple-50 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow text-left"
+                >
                   <div className="px-4 py-5 sm:p-6">
                     <h3 className="text-lg font-medium text-purple-900">Lineups</h3>
                     <p className="mt-2 text-sm text-purple-700">
-                      Build and manage your fantasy lineups - up to 25 players (Coming Soon)
+                      Build and manage your fantasy lineups - up to 25 players
                     </p>
                   </div>
-                </div>
+                </button>
               </div>
             </div>
           </div>
