@@ -16,14 +16,14 @@ This document provides a dependency-ordered task breakdown for implementing the 
 - **Data Source**: mlb-stats-api npm package
 
 **Total Tasks**: 155
-**Completed Tasks**: 102
+**Completed Tasks**: 105
 **MVP Scope**: Phase 3 (User Story 1 - P1) = 30 tasks
 
 ## Progress Summary
 
 | Phase | Status | Completed | Total | Notes |
 |-------|--------|-----------|-------|-------|
-| Phase 1: Setup | 🟢 Nearly Complete | 15/18 | 18 | Missing: Dockerfiles, nginx config |
+| Phase 1: Setup | ✅ Complete | 18/18 | 18 | All tasks complete |
 | Phase 2: Foundation | 🟡 Partial | 6/12 | 12 | Missing: logging, helmet, seed, utils |
 | Phase 3: User Auth (US1) | 🟢 Mostly Complete | 24/30 | 30 | Missing: local strategy, MFA DTO, audit module |
 | Phase 4: Scoring (US2) | ✅ Complete | 16/16 | 16 | Fully implemented |
@@ -32,9 +32,9 @@ This document provides a dependency-ordered task breakdown for implementing the 
 | Phase 7: Background Jobs | 🔴 Not Started | 0/8 | 8 | Not implemented |
 | Phase 8: Mobile (US5) | 🔴 Not Started | 0/13 | 13 | Not implemented |
 | Phase 9: Polish | 🔴 Not Started | 0/12 | 12 | Not implemented |
-| **Total** | 🟡 **66% Complete** | **102/155** | **155** | |
+| **Total** | 🟡 **68% Complete** | **105/155** | **155** | |
 
-**Ready for**: Phase 6 (Lineup Creation) or completing remaining Phase 1-3 tasks
+**Ready for**: Phase 6 (Lineup Creation) or completing remaining Phase 2-3 tasks
 
 ---
 
@@ -58,9 +58,9 @@ This document provides a dependency-ordered task breakdown for implementing the 
 - [X] T012 [P] Configure TailwindCSS in frontend/tailwind.config.js with mobile-first breakpoints
 - [X] T013 Create frontend/src/services/api.ts with Axios client and JWT interceptors
 - [X] T014 Create docker-compose.yml in project root with PostgreSQL 15, Redis, backend, and frontend services
-- [ ] T015 Create backend/Dockerfile for NestJS application
-- [ ] T016 [P] Create frontend/Dockerfile for React application
-- [ ] T017 [P] Create infrastructure/nginx.conf for reverse proxy configuration
+- [X] T015 Create backend/Dockerfile for NestJS application
+- [X] T016 [P] Create frontend/Dockerfile for React application
+- [X] T017 [P] Create infrastructure/nginx.conf for reverse proxy configuration
 - [X] T018 Create README.md with setup instructions, development commands, and architecture overview
 
 ---
