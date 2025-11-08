@@ -16,7 +16,7 @@ This document provides a dependency-ordered task breakdown for implementing the 
 - **Data Source**: mlb-stats-api npm package
 
 **Total Tasks**: 155
-**Completed Tasks**: 105
+**Completed Tasks**: 111
 **MVP Scope**: Phase 3 (User Story 1 - P1) = 30 tasks
 
 ## Progress Summary
@@ -24,7 +24,7 @@ This document provides a dependency-ordered task breakdown for implementing the 
 | Phase | Status | Completed | Total | Notes |
 |-------|--------|-----------|-------|-------|
 | Phase 1: Setup | ✅ Complete | 18/18 | 18 | All tasks complete |
-| Phase 2: Foundation | 🟡 Partial | 6/12 | 12 | Missing: logging, helmet, seed, utils |
+| Phase 2: Foundation | ✅ Complete | 12/12 | 12 | All infrastructure tasks complete |
 | Phase 3: User Auth (US1) | 🟢 Mostly Complete | 24/30 | 30 | Missing: local strategy, MFA DTO, audit module |
 | Phase 4: Scoring (US2) | ✅ Complete | 16/16 | 16 | Fully implemented |
 | Phase 5: Player Research (US3) | ✅ Complete | 22/22 | 22 | Implemented as Feature 002 |
@@ -32,9 +32,9 @@ This document provides a dependency-ordered task breakdown for implementing the 
 | Phase 7: Background Jobs | 🔴 Not Started | 0/8 | 8 | Not implemented |
 | Phase 8: Mobile (US5) | 🔴 Not Started | 0/13 | 13 | Not implemented |
 | Phase 9: Polish | 🔴 Not Started | 0/12 | 12 | Not implemented |
-| **Total** | 🟡 **68% Complete** | **105/155** | **155** | |
+| **Total** | 🟡 **72% Complete** | **111/155** | **155** | |
 
-**Ready for**: Phase 6 (Lineup Creation) or completing remaining Phase 2-3 tasks
+**Ready for**: Phase 6 (Lineup Creation) or completing remaining Phase 3 tasks
 
 ---
 
@@ -74,15 +74,15 @@ This document provides a dependency-ordered task breakdown for implementing the 
 - [X] T019 Define complete Prisma schema in backend/prisma/schema.prisma with all 8 models (User, ScoringConfiguration, Player, PlayerStatistic, Lineup, LineupSlot, AuditLog, RefreshToken)
 - [X] T020 Create backend/src/common/decorators/current-user.ts decorator for extracting authenticated user from request
 - [X] T021 Create backend/src/common/filters/http-exception.filter.ts for standardized error responses
-- [ ] T022 Create backend/src/common/interceptors/logging.interceptor.ts for request/response logging
+- [X] T022 Create backend/src/common/interceptors/logging.interceptor.ts for request/response logging
 - [X] T023 Create backend/src/common/pipes/validation.pipe.ts for DTO validation (configured globally in main.ts)
-- [ ] T024 Create backend/src/common/middleware/helmet.middleware.ts for security headers
+- [X] T024 Install and configure helmet middleware in backend/src/main.ts for security headers (CSP, HSTS, XSS protection)
 - [X] T025 Create backend/src/core/security.ts with password hashing and JWT utilities (bcrypt cost 12) (implemented in auth.service.ts)
-- [ ] T026 Create backend/src/core/exceptions.ts with custom exception classes (UnauthorizedException, ForbiddenException, etc.)
+- [X] T026 Create backend/src/core/exceptions.ts with 40+ custom exception classes (Auth, User, Scoring, Player, Lineup, Validation)
 - [X] T027 Run initial Prisma migration: `npx prisma migrate dev --name init`
-- [ ] T028 Create backend/prisma/seed.ts with test data (10 users, 100 MLB players, sample configs)
-- [ ] T029 Create frontend/src/utils/validation.ts with form validation helpers (email, password strength)
-- [ ] T030 Create frontend/src/utils/accessibility.ts with ARIA helper functions for WCAG compliance
+- [X] T028 Create backend/prisma/seed.ts with test data (10 users, 30 teams, 100 MLB players, sample configs, statistics)
+- [X] T029 Create frontend/src/utils/validation.ts with form validation helpers (email, password strength, scoring config, lineup name)
+- [X] T030 Create frontend/src/utils/accessibility.ts with ARIA helper functions for WCAG 2.1 AA compliance (focus trapping, contrast checking)
 
 ---
 
