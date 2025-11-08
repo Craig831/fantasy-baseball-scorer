@@ -24,7 +24,7 @@ import {
 import { LineupsService } from './lineups.service';
 import { CreateLineupDto } from './dto/create-lineup.dto';
 import { UpdateLineupDto } from './dto/update-lineup.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('lineups')

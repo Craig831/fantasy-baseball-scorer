@@ -360,7 +360,7 @@ async function seedPlayers() {
   ];
 
   // Create players with team relationships
-  const players = [];
+  const players: any[] = [];
   for (const p of playerData) {
     const team = teams.find((t) => t.abbreviation === p.teamAbbr);
     if (team) {
@@ -424,7 +424,7 @@ async function seedPlayerStatistics() {
   const seasonStart = new Date(`${CURRENT_SEASON}-04-01`);
   const seasonEnd = new Date(`${CURRENT_SEASON}-09-30`);
 
-  const statistics = [];
+  const statistics: any[] = [];
 
   for (const player of players) {
     const isHitter = !['P'].includes(player.position);
