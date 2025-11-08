@@ -118,6 +118,25 @@ export class SearchPlayersDto {
   @IsOptional()
   @IsString()
   statisticType?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sort field (score, name, position, team, season, status)',
+    example: 'score',
+    enum: ['score', 'name', 'position', 'team', 'season', 'status'],
+  })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sort order (asc or desc)',
+    example: 'desc',
+    enum: ['asc', 'desc'],
+    default: 'desc',
+  })
+  @IsOptional()
+  @IsString()
+  sortOrder?: 'asc' | 'desc' = 'desc';
 }
 
 /**

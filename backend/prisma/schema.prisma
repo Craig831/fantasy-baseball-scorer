@@ -91,6 +91,9 @@ model Player {
   @@index([status], name: "idx_players_status")
   @@index([position, teamId], name: "idx_players_position_team")
   @@index([season], name: "idx_players_season")
+  @@index([name], name: "idx_players_name")
+  @@index([status, name], name: "idx_players_status_name")
+  @@index([position, status, season], name: "idx_players_position_status_season")
   @@map("players")
 }
 

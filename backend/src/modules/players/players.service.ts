@@ -38,6 +38,8 @@ export class PlayersService {
       limit = 50,
       scoringConfigId,
       statisticType,
+      sortBy,
+      sortOrder = 'desc',
     } = filters;
 
     // Build where clause for Prisma
@@ -88,16 +90,45 @@ export class PlayersService {
     // Calculate pagination
     const skip = (page - 1) * limit;
 
+    // Build orderBy clause
+    const orderBy: Prisma.PlayerOrderByWithRelationInput[] = [];
+
+    // If sorting by score, we'll handle it in-memory after score calculation
+    // For other fields, sort at database level
+    if (sortBy && sortBy !== 'score') {
+      switch (sortBy) {
+        case 'name':
+          orderBy.push({ name: sortOrder });
+          break;
+        case 'position':
+          orderBy.push({ position: sortOrder });
+          break;
+        case 'team':
+          orderBy.push({ team: { name: sortOrder } });
+          break;
+        case 'season':
+          orderBy.push({ season: sortOrder });
+          break;
+        case 'status':
+          orderBy.push({ status: sortOrder });
+          break;
+        default:
+          // Default sort
+          orderBy.push({ status: 'asc' }, { name: 'asc' });
+      }
+    } else if (!sortBy) {
+      // Default sort when no sortBy specified
+      orderBy.push({ status: 'asc' }, { name: 'asc' });
+    }
+    // If sortBy === 'score', orderBy will be empty (sort in-memory later)
+
     // Execute query with pagination
     const [players, total] = await Promise.all([
       this.prisma.player.findMany({
         where,
-        skip,
-        take: limit,
-        orderBy: [
-          { status: 'asc' }, // Active players first
-          { name: 'asc' },
-        ],
+        skip: sortBy === 'score' ? 0 : skip, // Fetch all for score sorting, paginate later
+        take: sortBy === 'score' ? undefined : limit, // Fetch all for score sorting
+        orderBy: orderBy.length > 0 ? orderBy : undefined,
         include: {
           team: true, // Include team information
           statistics: {
@@ -138,6 +169,23 @@ export class PlayersService {
         // If scoring config fetch fails, just return players without scores
         console.error('Failed to calculate scores:', error);
       }
+    }
+
+    // If sorting by score, sort in-memory and then paginate
+    if (sortBy === 'score') {
+      // Sort by score (handle null/undefined scores)
+      players.sort((a, b) => {
+        const scoreA = (a as any).score ?? -Infinity;
+        const scoreB = (b as any).score ?? -Infinity;
+        return sortOrder === 'desc' ? scoreB - scoreA : scoreA - scoreB;
+      });
+
+      // Apply pagination after sorting
+      const startIndex = skip;
+      const endIndex = startIndex + limit;
+      const paginatedPlayers = players.slice(startIndex, endIndex);
+
+      return { players: paginatedPlayers, total };
     }
 
     return { players, total };

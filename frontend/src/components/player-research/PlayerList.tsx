@@ -17,6 +17,7 @@ interface PlayerListProps {
   onPageChange: (page: number) => void;
   onPlayerClick?: (player: Player) => void;
   onScoreClick?: (player: Player) => void;
+  onSortChange?: (field: string, direction: 'asc' | 'desc') => void;
   statisticType: 'hitting' | 'pitching';
 }
 
@@ -31,17 +32,27 @@ const PlayerList: React.FC<PlayerListProps> = ({
   onPageChange,
   onPlayerClick,
   onScoreClick,
+  onSortChange,
   statisticType,
 }) => {
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const handleSort = (field: SortField) => {
+    let newDirection: SortDirection;
+
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-      setSortField(field);
-      setSortDirection('asc');
+      newDirection = 'asc';
+    }
+
+    setSortField(field);
+    setSortDirection(newDirection);
+
+    // Trigger server-side sort if handler provided
+    if (onSortChange) {
+      onSortChange(field, newDirection);
     }
   };
 

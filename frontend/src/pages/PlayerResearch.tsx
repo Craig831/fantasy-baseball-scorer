@@ -37,6 +37,8 @@ const PlayerResearch: React.FC = () => {
   const [scoringConfigId, setScoringConfigId] = useState<string | null>(null);
   const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdown | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [sortBy, setSortBy] = useState<string>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Load filter options
   const loadPositions = useCallback(async () => {
@@ -49,12 +51,18 @@ const PlayerResearch: React.FC = () => {
   }, []);
 
   // Search players
-  const performSearch = useCallback(async (searchFilters: PlayerSearchFilters, page: number = 1, configId: string | null = null) => {
+  const performSearch = useCallback(async (
+    searchFilters: PlayerSearchFilters,
+    page: number = 1,
+    configId: string | null = null,
+    sort?: string,
+    order?: 'asc' | 'desc'
+  ) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await searchPlayers(searchFilters, page, 50, configId);
+      const response = await searchPlayers(searchFilters, page, 50, configId, sort, order);
       setPlayers(response.players);
       setPagination(response.pagination);
     } catch (err: any) {
@@ -68,26 +76,33 @@ const PlayerResearch: React.FC = () => {
 
   // Auto-load data on mount
   useEffect(() => {
-    performSearch(filters);
+    performSearch(filters, 1, scoringConfigId, sortBy, sortOrder);
     loadPositions();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle scoring config change
   const handleConfigChange = (configId: string | null) => {
     setScoringConfigId(configId);
-    performSearch(filters, 1, configId);
+    performSearch(filters, 1, configId, sortBy, sortOrder);
   };
 
   // Handle filter changes
   const handleFilterChange = (newFilters: PlayerSearchFilters) => {
     setFilters(newFilters);
-    performSearch(newFilters, 1, scoringConfigId);
+    performSearch(newFilters, 1, scoringConfigId, sortBy, sortOrder);
   };
 
   // Handle page change
   const handlePageChange = (page: number) => {
-    performSearch(filters, page, scoringConfigId);
+    performSearch(filters, page, scoringConfigId, sortBy, sortOrder);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handle sort change
+  const handleSortChange = (field: string, direction: 'asc' | 'desc') => {
+    setSortBy(field);
+    setSortOrder(direction);
+    performSearch(filters, 1, scoringConfigId, field, direction);
   };
 
   // Handle player click
@@ -186,6 +201,7 @@ const PlayerResearch: React.FC = () => {
             onPageChange={handlePageChange}
             onPlayerClick={handlePlayerClick}
             onScoreClick={handleScoreClick}
+            onSortChange={handleSortChange}
             statisticType={filters.statisticType || 'hitting'}
           />
         </main>

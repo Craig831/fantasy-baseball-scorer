@@ -83,7 +83,9 @@ export const searchPlayers = async (
   filters: PlayerSearchFilters,
   page: number = 1,
   limit: number = 50,
-  scoringConfigId?: string | null
+  scoringConfigId?: string | null,
+  sortBy?: string,
+  sortOrder?: 'asc' | 'desc'
 ): Promise<SearchPlayersResponse> => {
   const params: any = {
     page,
@@ -120,6 +122,14 @@ export const searchPlayers = async (
 
   if (scoringConfigId) {
     params.scoringConfigId = scoringConfigId;
+  }
+
+  if (sortBy) {
+    params.sortBy = sortBy;
+  }
+
+  if (sortOrder) {
+    params.sortOrder = sortOrder;
   }
 
   const response = await api.get('/players', {

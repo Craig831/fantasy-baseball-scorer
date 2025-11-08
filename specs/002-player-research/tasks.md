@@ -83,8 +83,8 @@
 
 ### Testing
 
-- [ ] T032 [P] [US1] Write unit tests for PlayersService filtering logic in backend/src/modules/players/players.service.spec.ts
-- [ ] T033 [P] [US1] Write unit tests for SearchPlayersDto validation in backend/src/modules/player-research/dto/search-players.dto.spec.ts
+- [X] T032 [P] [US1] Write unit tests for PlayersService filtering logic in backend/src/modules/players/players.service.spec.ts
+- [X] T033 [P] [US1] Write unit tests for SearchPlayersDto validation in backend/src/modules/player-research/dto/search-players.dto.spec.ts
 - [ ] T034 [P] [US1] Write e2e tests for GET /api/players with various filters in backend/test/player-research.e2e-spec.ts
 - [ ] T035 [P] [US1] Write React component tests for FilterPanel in frontend/src/components/player-research/FilterPanel.test.tsx
 - [ ] T036 [P] [US1] Write React component tests for PlayerList in frontend/src/components/player-research/PlayerList.test.tsx
@@ -101,29 +101,29 @@
 
 ### Backend Implementation
 
-- [ ] T037 [US2] Create score calculation service in backend/src/modules/player-research/services/score-calculation.service.ts
-- [ ] T038 [US2] Implement calculatePlayerScore() method using scoring configuration rules
-- [ ] T039 [US2] Create ScoreBreakdownDto in backend/src/modules/player-research/dto/score-breakdown.dto.ts
-- [ ] T040 [US2] Modify PlayersService.findAll() to include score calculations using user's active config
-- [ ] T041 [US2] Implement GET /api/players/:id/score-breakdown endpoint in backend/src/modules/player-research/player-research.controller.ts
-- [ ] T042 [P] [US2] Add scoringConfigId query parameter to search endpoint for config selection
-- [ ] T043 [P] [US2] Handle null scoring configuration case (return raw stats without scores)
-- [ ] T044 [P] [US2] Optimize score calculation query with database joins and indices
+- [X] T037 [US2] Create score calculation service in backend/src/modules/player-research/services/score-calculation.service.ts
+- [X] T038 [US2] Implement calculatePlayerScore() method using scoring configuration rules
+- [X] T039 [US2] Create ScoreBreakdownDto in backend/src/modules/player-research/dto/score-breakdown.dto.ts
+- [X] T040 [US2] Modify PlayersService.findAll() to include score calculations using user's active config
+- [X] T041 [US2] Implement GET /api/players/:id/score-breakdown endpoint in backend/src/modules/player-research/player-research.controller.ts
+- [X] T042 [P] [US2] Add scoringConfigId query parameter to search endpoint for config selection
+- [X] T043 [P] [US2] Handle null scoring configuration case (return raw stats without scores)
+- [X] T044 [P] [US2] Optimize score calculation query with database joins and indices
 
 ### Frontend Implementation
 
-- [ ] T045 [P] [US2] Create ScoringConfigSelector component in frontend/src/components/player-research/ScoringConfigSelector.tsx
-- [ ] T046 [P] [US2] Update PlayerCard to display calculated score prominently
-- [ ] T047 [P] [US2] Create ScoreBreakdownModal component in frontend/src/components/player-research/ScoreBreakdownModal.tsx
-- [ ] T048 [US2] Add onClick handler to scores to open ScoreBreakdownModal
-- [ ] T049 [US2] Implement API service method for score breakdown in frontend/src/services/api.ts
-- [ ] T050 [US2] Add score sorting functionality to PlayerList (sort by score desc/asc)
-- [ ] T051 [P] [US2] Display "Select scoring configuration" message when no config active
-- [ ] T052 [P] [US2] Implement real-time score recalculation when config changes
+- [X] T045 [P] [US2] Create ScoringConfigSelector component in frontend/src/components/player-research/ScoringConfigSelector.tsx
+- [X] T046 [P] [US2] Update PlayerCard to display calculated score prominently
+- [X] T047 [P] [US2] Create ScoreBreakdownModal component in frontend/src/components/player-research/ScoreBreakdownModal.tsx
+- [X] T048 [US2] Add onClick handler to scores to open ScoreBreakdownModal
+- [X] T049 [US2] Implement API service method for score breakdown in frontend/src/services/api.ts
+- [X] T050 [US2] Add score sorting functionality to PlayerList (sort by score desc/asc)
+- [X] T051 [P] [US2] Display "Select scoring configuration" message when no config active
+- [X] T052 [P] [US2] Implement real-time score recalculation when config changes
 
 ### Testing
 
-- [ ] T053 [P] [US2] Write unit tests for score calculation logic in backend/src/modules/player-research/services/score-calculation.service.spec.ts
+- [X] T053 [P] [US2] Write unit tests for score calculation logic in backend/src/modules/player-research/services/score-calculation.service.spec.ts
 - [ ] T054 [P] [US2] Write unit tests for score breakdown DTO transformation in backend/src/modules/player-research/dto/score-breakdown.dto.spec.ts
 - [ ] T055 [P] [US2] Write e2e tests for GET /api/players/:id/score-breakdown in backend/test/player-research.e2e-spec.ts
 - [ ] T056 [P] [US2] Write React component tests for ScoreBreakdownModal in frontend/src/components/player-research/ScoreBreakdownModal.test.tsx
