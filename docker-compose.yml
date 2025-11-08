@@ -17,6 +17,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - fantasy-baseball-network
 
   redis:
     image: redis:7-alpine
@@ -30,7 +32,67 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+    networks:
+      - fantasy-baseball-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fantasy-baseball-backend
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/fantasy_baseball
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
+      - JWT_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - CORS_ORIGINS=http://localhost:3001,http://localhost
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fantasy-baseball-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fantasy-baseball-frontend
+    environment:
+      - REACT_APP_API_URL=http://localhost/api
+    ports:
+      - "3001:8080"
+    depends_on:
+      - backend
+    networks:
+      - fantasy-baseball-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: fantasy-baseball-nginx
+    volumes:
+      - ./infrastructure/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - fantasy-baseball-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  fantasy-baseball-network:
+    driver: bridge

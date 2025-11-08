@@ -5,12 +5,16 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
+import { MfaGuard } from './guards/mfa.guard';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
     PrismaModule,
     PassportModule,
+    AuditModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
@@ -28,7 +32,7 @@ import { PrismaModule } from '../../prisma/prisma.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService],
+  providers: [AuthService, JwtStrategy, LocalStrategy, MfaGuard],
+  exports: [AuthService, MfaGuard],
 })
 export class AuthModule {}

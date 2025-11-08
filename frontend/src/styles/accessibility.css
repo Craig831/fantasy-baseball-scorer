@@ -1,0 +1,171 @@
+/**
+ * Accessibility styles for WCAG 2.1 Level AA compliance
+ */
+
+/* Screen reader only - visually hidden but accessible to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Make sr-only element visible when focused (skip links) */
+.sr-only:focus,
+.sr-only:active {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 1rem;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Focus styles - visible focus indicator for keyboard navigation */
+*:focus {
+  outline: 2px solid #2563eb; /* Blue focus ring */
+  outline-offset: 2px;
+}
+
+/* Custom focus styles for interactive elements */
+button:focus,
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Remove default outline on mouse click but keep for keyboard */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Restore outline for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* High contrast mode detection (Windows High Contrast Mode) */
+@media (prefers-contrast: high) {
+  *:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 3px;
+  }
+}
+
+/* Reduce motion for users who prefer less animation */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skip link styles */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #2563eb;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Ensure minimum touch target size (44x44px for WCAG 2.1) */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  input[type="button"],
+  input[type="submit"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Error text should have sufficient contrast (WCAG AA requires 4.5:1) */
+.error-message,
+[role="alert"],
+.text-error {
+  color: #dc2626; /* Red with good contrast on white */
+}
+
+/* Success text should have sufficient contrast */
+.success-message,
+.text-success {
+  color: #16a34a; /* Green with good contrast on white */
+}
+
+/* Warning text should have sufficient contrast */
+.warning-message,
+.text-warning {
+  color: #ca8a04; /* Yellow/amber with good contrast on white */
+}
+
+/* Ensure links are distinguishable from regular text */
+a {
+  text-decoration: underline;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+/* Ensure form error states are visually distinct */
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: #dc2626;
+  border-width: 2px;
+}
+
+/* Required field indicator */
+.required::after {
+  content: " *";
+  color: #dc2626;
+}
+
+/* Loading/busy indicator for screen readers */
+[aria-busy="true"] {
+  cursor: wait;
+}
+
+/* Hide elements from both screen readers and visual display */
+.hidden,
+[hidden] {
+  display: none !important;
+}
+
+/* Ensure sufficient line height for readability */
+body {
+  line-height: 1.5;
+}
+
+/* Ensure sufficient spacing between interactive elements */
+button + button,
+a + button,
+button + a,
+a + a {
+  margin-left: 0.5rem;
+}
