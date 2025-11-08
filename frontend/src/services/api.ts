@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Player, PlayerSearchFilters } from '../types/player';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000/api',
@@ -59,5 +60,122 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// ====================
+// Player Research APIs
+// ====================
+
+export interface SearchPlayersResponse {
+  players: Player[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+/**
+ * Search and filter players
+ */
+export const searchPlayers = async (
+  filters: PlayerSearchFilters,
+  page: number = 1,
+  limit: number = 50,
+  scoringConfigId?: string | null,
+  sortBy?: string,
+  sortOrder?: 'asc' | 'desc'
+): Promise<SearchPlayersResponse> => {
+  const params: any = {
+    page,
+    limit,
+  };
+
+  if (filters.position && filters.position.length > 0) {
+    params.position = filters.position;
+  }
+
+  if (filters.league) {
+    params.league = filters.league;
+  }
+
+  if (filters.statisticType) {
+    params.statisticType = filters.statisticType;
+  }
+
+  if (filters.status) {
+    params.status = filters.status;
+  }
+
+  if (filters.season) {
+    params.season = filters.season;
+  }
+
+  if (filters.dateFrom) {
+    params.dateFrom = filters.dateFrom;
+  }
+
+  if (filters.dateTo) {
+    params.dateTo = filters.dateTo;
+  }
+
+  if (scoringConfigId) {
+    params.scoringConfigId = scoringConfigId;
+  }
+
+  if (sortBy) {
+    params.sortBy = sortBy;
+  }
+
+  if (sortOrder) {
+    params.sortOrder = sortOrder;
+  }
+
+  const response = await api.get('/players', {
+    params,
+    paramsSerializer: {
+      indexes: null, // Use repeat format: position=1B&position=OF instead of position[]=1B
+    },
+  });
+  return response.data;
+};
+
+/**
+ * Get player details by ID
+ */
+export const getPlayerById = async (id: string): Promise<Player> => {
+  const response = await api.get(`/players/${id}`);
+  return response.data;
+};
+
+/**
+ * Get list of unique teams for filter dropdown
+ */
+export const getTeams = async (): Promise<string[]> => {
+  const response = await api.get('/players/filters/teams');
+  return response.data;
+};
+
+/**
+ * Get list of unique positions for filter dropdown
+ */
+export const getPositions = async (): Promise<string[]> => {
+  const response = await api.get('/players/filters/positions');
+  return response.data;
+};
+
+/**
+ * Get detailed score breakdown for a player
+ */
+export const getPlayerScoreBreakdown = async (
+  playerId: string,
+  scoringConfigId: string
+): Promise<import('../types/player').ScoreBreakdown> => {
+  const response = await api.get(`/players/${playerId}/score-breakdown`, {
+    params: { scoringConfigId },
+  });
+  return response.data;
+};
 
 export default api;

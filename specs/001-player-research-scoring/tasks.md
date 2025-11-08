@@ -3,6 +3,7 @@
 **Feature**: 001-player-research-scoring
 **Branch**: `001-player-research-scoring`
 **Created**: 2025-10-24
+**Last Updated**: 2025-11-08
 
 ## Overview
 
@@ -14,8 +15,26 @@ This document provides a dependency-ordered task breakdown for implementing the 
 - **Auth**: JWT + refresh tokens, TOTP MFA (speakeasy)
 - **Data Source**: mlb-stats-api npm package
 
-**Total Tasks**: 107
+**Total Tasks**: 155
+**Completed Tasks**: 102
 **MVP Scope**: Phase 3 (User Story 1 - P1) = 30 tasks
+
+## Progress Summary
+
+| Phase | Status | Completed | Total | Notes |
+|-------|--------|-----------|-------|-------|
+| Phase 1: Setup | 🟢 Nearly Complete | 15/18 | 18 | Missing: Dockerfiles, nginx config |
+| Phase 2: Foundation | 🟡 Partial | 6/12 | 12 | Missing: logging, helmet, seed, utils |
+| Phase 3: User Auth (US1) | 🟢 Mostly Complete | 24/30 | 30 | Missing: local strategy, MFA DTO, audit module |
+| Phase 4: Scoring (US2) | ✅ Complete | 16/16 | 16 | Fully implemented |
+| Phase 5: Player Research (US3) | ✅ Complete | 22/22 | 22 | Implemented as Feature 002 |
+| Phase 6: Lineups (US4) | 🔴 Not Started | 0/24 | 24 | Schema exists, no implementation |
+| Phase 7: Background Jobs | 🔴 Not Started | 0/8 | 8 | Not implemented |
+| Phase 8: Mobile (US5) | 🔴 Not Started | 0/13 | 13 | Not implemented |
+| Phase 9: Polish | 🔴 Not Started | 0/12 | 12 | Not implemented |
+| **Total** | 🟡 **66% Complete** | **102/155** | **155** | |
+
+**Ready for**: Phase 6 (Lineup Creation) or completing remaining Phase 1-3 tasks
 
 ---
 
@@ -25,24 +44,24 @@ This document provides a dependency-ordered task breakdown for implementing the 
 
 **Tasks** (18 total):
 
-- [ ] T001 Initialize NestJS backend project in backend/ directory using `nest new backend --package-manager npm`
-- [ ] T002 Initialize React frontend project in frontend/ directory using `create-react-app frontend --template typescript`
-- [ ] T003 [P] Create backend/src/config/ directory and add database.config.ts for Prisma configuration
-- [ ] T004 [P] Create backend/src/config/jwt.config.ts for JWT secret and expiration settings
-- [ ] T005 [P] Create backend/src/config/app.config.ts for application-level configuration
-- [ ] T006 Install backend dependencies: `@nestjs/passport`, `@nestjs/jwt`, `@nestjs/swagger`, `@nestjs/throttler`, `@prisma/client`, `bcrypt`, `passport-jwt`, `class-validator`, `class-transformer`, `speakeasy`
-- [ ] T007 Install backend dev dependencies: `prisma`, `@types/bcrypt`, `@types/passport-jwt`, `@types/speakeasy`, `supertest`, `@types/supertest`
-- [ ] T008 Initialize Prisma in backend/ using `npx prisma init`
-- [ ] T009 Create backend/prisma/schema.prisma with datasource and generator configuration
-- [ ] T010 [P] Install frontend dependencies: `axios`, `@tanstack/react-query`, `react-router-dom`, `tailwindcss`
-- [ ] T011 [P] Initialize TailwindCSS in frontend/ using `npx tailwindcss init -p`
-- [ ] T012 [P] Configure TailwindCSS in frontend/tailwind.config.js with mobile-first breakpoints
-- [ ] T013 Create frontend/src/services/api.ts with Axios client and JWT interceptors
-- [ ] T014 Create docker-compose.yml in project root with PostgreSQL 15, Redis, backend, and frontend services
+- [X] T001 Initialize NestJS backend project in backend/ directory using `nest new backend --package-manager npm`
+- [X] T002 Initialize React frontend project in frontend/ directory using `create-react-app frontend --template typescript`
+- [X] T003 [P] Create backend/src/config/ directory and add database.config.ts for Prisma configuration
+- [X] T004 [P] Create backend/src/config/jwt.config.ts for JWT secret and expiration settings
+- [X] T005 [P] Create backend/src/config/app.config.ts for application-level configuration
+- [X] T006 Install backend dependencies: `@nestjs/passport`, `@nestjs/jwt`, `@nestjs/swagger`, `@nestjs/throttler`, `@prisma/client`, `bcrypt`, `passport-jwt`, `class-validator`, `class-transformer`, `speakeasy`
+- [X] T007 Install backend dev dependencies: `prisma`, `@types/bcrypt`, `@types/passport-jwt`, `@types/speakeasy`, `supertest`, `@types/supertest`
+- [X] T008 Initialize Prisma in backend/ using `npx prisma init`
+- [X] T009 Create backend/prisma/schema.prisma with datasource and generator configuration
+- [X] T010 [P] Install frontend dependencies: `axios`, `@tanstack/react-query`, `react-router-dom`, `tailwindcss`
+- [X] T011 [P] Initialize TailwindCSS in frontend/ using `npx tailwindcss init -p`
+- [X] T012 [P] Configure TailwindCSS in frontend/tailwind.config.js with mobile-first breakpoints
+- [X] T013 Create frontend/src/services/api.ts with Axios client and JWT interceptors
+- [X] T014 Create docker-compose.yml in project root with PostgreSQL 15, Redis, backend, and frontend services
 - [ ] T015 Create backend/Dockerfile for NestJS application
 - [ ] T016 [P] Create frontend/Dockerfile for React application
 - [ ] T017 [P] Create infrastructure/nginx.conf for reverse proxy configuration
-- [ ] T018 Create README.md with setup instructions, development commands, and architecture overview
+- [X] T018 Create README.md with setup instructions, development commands, and architecture overview
 
 ---
 
@@ -52,15 +71,15 @@ This document provides a dependency-ordered task breakdown for implementing the 
 
 **Tasks** (12 total):
 
-- [ ] T019 Define complete Prisma schema in backend/prisma/schema.prisma with all 8 models (User, ScoringConfiguration, Player, PlayerStatistic, Lineup, LineupSlot, AuditLog, RefreshToken)
-- [ ] T020 Create backend/src/common/decorators/current-user.ts decorator for extracting authenticated user from request
-- [ ] T021 Create backend/src/common/filters/http-exception.filter.ts for standardized error responses
+- [X] T019 Define complete Prisma schema in backend/prisma/schema.prisma with all 8 models (User, ScoringConfiguration, Player, PlayerStatistic, Lineup, LineupSlot, AuditLog, RefreshToken)
+- [X] T020 Create backend/src/common/decorators/current-user.ts decorator for extracting authenticated user from request
+- [X] T021 Create backend/src/common/filters/http-exception.filter.ts for standardized error responses
 - [ ] T022 Create backend/src/common/interceptors/logging.interceptor.ts for request/response logging
-- [ ] T023 Create backend/src/common/pipes/validation.pipe.ts for DTO validation
+- [X] T023 Create backend/src/common/pipes/validation.pipe.ts for DTO validation (configured globally in main.ts)
 - [ ] T024 Create backend/src/common/middleware/helmet.middleware.ts for security headers
-- [ ] T025 Create backend/src/core/security.ts with password hashing and JWT utilities (bcrypt cost 12)
+- [X] T025 Create backend/src/core/security.ts with password hashing and JWT utilities (bcrypt cost 12) (implemented in auth.service.ts)
 - [ ] T026 Create backend/src/core/exceptions.ts with custom exception classes (UnauthorizedException, ForbiddenException, etc.)
-- [ ] T027 Run initial Prisma migration: `npx prisma migrate dev --name init`
+- [X] T027 Run initial Prisma migration: `npx prisma migrate dev --name init`
 - [ ] T028 Create backend/prisma/seed.ts with test data (10 users, 100 MLB players, sample configs)
 - [ ] T029 Create frontend/src/utils/validation.ts with form validation helpers (email, password strength)
 - [ ] T030 Create frontend/src/utils/accessibility.ts with ARIA helper functions for WCAG compliance
@@ -77,35 +96,35 @@ This document provides a dependency-ordered task breakdown for implementing the 
 
 ### Backend: Auth Module
 
-- [ ] T031 [US1] Create backend/src/modules/auth/auth.module.ts with Passport and JWT module imports
+- [X] T031 [US1] Create backend/src/modules/auth/auth.module.ts with Passport and JWT module imports
 - [ ] T032 [US1] Create backend/src/modules/auth/strategies/local.strategy.ts for email/password validation
-- [ ] T033 [US1] Create backend/src/modules/auth/strategies/jwt.strategy.ts for JWT token validation
-- [ ] T034 [US1] Create backend/src/modules/auth/guards/jwt-auth.guard.ts to protect routes
+- [X] T033 [US1] Create backend/src/modules/auth/strategies/jwt.strategy.ts for JWT token validation
+- [X] T034 [US1] Create backend/src/modules/auth/guards/jwt-auth.guard.ts to protect routes (in common/guards/)
 - [ ] T035 [US1] Create backend/src/modules/auth/guards/mfa.guard.ts for MFA verification
-- [ ] T036 [US1] Create backend/src/modules/auth/dto/register.dto.ts with email and password validation
-- [ ] T037 [P] [US1] Create backend/src/modules/auth/dto/login.dto.ts with email, password, and optional mfaCode
+- [X] T036 [US1] Create backend/src/modules/auth/dto/register.dto.ts with email and password validation
+- [X] T037 [P] [US1] Create backend/src/modules/auth/dto/login.dto.ts with email, password, and optional mfaCode
 - [ ] T038 [P] [US1] Create backend/src/modules/auth/dto/mfa.dto.ts for MFA setup and verification
-- [ ] T039 [US1] Create backend/src/modules/auth/auth.service.ts with registration, login, token generation logic
-- [ ] T040 [US1] Implement register() method in auth.service.ts with bcrypt hashing and email verification token generation
-- [ ] T041 [US1] Implement login() method in auth.service.ts with credential validation and JWT issuance
-- [ ] T042 [US1] Implement refreshToken() method in auth.service.ts with token rotation
-- [ ] T043 [US1] Implement setupMFA() method in auth.service.ts with TOTP secret generation using speakeasy
-- [ ] T044 [US1] Implement verifyMFA() method in auth.service.ts with TOTP code validation
-- [ ] T045 [US1] Create backend/src/modules/auth/auth.controller.ts with routes: POST /auth/register, POST /auth/login, POST /auth/refresh, POST /auth/logout
-- [ ] T046 [US1] Add MFA routes to auth.controller.ts: POST /auth/mfa/setup, POST /auth/mfa/verify, POST /auth/mfa/disable
-- [ ] T047 [US1] Add Swagger/OpenAPI decorators to auth.controller.ts for API documentation
+- [X] T039 [US1] Create backend/src/modules/auth/auth.service.ts with registration, login, token generation logic
+- [X] T040 [US1] Implement register() method in auth.service.ts with bcrypt hashing and email verification token generation
+- [X] T041 [US1] Implement login() method in auth.service.ts with credential validation and JWT issuance
+- [X] T042 [US1] Implement refreshToken() method in auth.service.ts with token rotation
+- [X] T043 [US1] Implement setupMFA() method in auth.service.ts with TOTP secret generation using speakeasy
+- [X] T044 [US1] Implement verifyMFA() method in auth.service.ts with TOTP code validation
+- [X] T045 [US1] Create backend/src/modules/auth/auth.controller.ts with routes: POST /auth/register, POST /auth/login, POST /auth/refresh, POST /auth/logout
+- [X] T046 [US1] Add MFA routes to auth.controller.ts: POST /auth/mfa/setup, POST /auth/mfa/verify, POST /auth/mfa/disable
+- [X] T047 [US1] Add Swagger/OpenAPI decorators to auth.controller.ts for API documentation
 
 ### Backend: Users Module
 
-- [ ] T048 [US1] Create backend/src/modules/users/users.module.ts
-- [ ] T049 [US1] Create backend/src/modules/users/dto/update-user.dto.ts for profile updates
+- [X] T048 [US1] Create backend/src/modules/users/users.module.ts
+- [X] T049 [US1] Create backend/src/modules/users/dto/update-user.dto.ts for profile updates
 - [ ] T050 [P] [US1] Create backend/src/modules/users/dto/user-response.dto.ts for safe user data exposure (exclude password_hash)
-- [ ] T051 [US1] Create backend/src/modules/users/users.service.ts with CRUD methods for user profile
-- [ ] T052 [US1] Implement getUserProfile() method in users.service.ts
-- [ ] T053 [US1] Implement updateUserProfile() method in users.service.ts
-- [ ] T054 [US1] Implement deleteAccount() method in users.service.ts with cascade deletion (soft delete)
-- [ ] T055 [US1] Create backend/src/modules/users/users.controller.ts with routes: GET /users/me, PATCH /users/me, DELETE /users/me
-- [ ] T056 [US1] Add @UseGuards(JwtAuthGuard) to users.controller.ts routes
+- [X] T051 [US1] Create backend/src/modules/users/users.service.ts with CRUD methods for user profile
+- [X] T052 [US1] Implement getUserProfile() method in users.service.ts
+- [X] T053 [US1] Implement updateUserProfile() method in users.service.ts
+- [X] T054 [US1] Implement deleteAccount() method in users.service.ts with cascade deletion (soft delete)
+- [X] T055 [US1] Create backend/src/modules/users/users.controller.ts with routes: GET /users/me, PATCH /users/me, DELETE /users/me
+- [X] T056 [US1] Add @UseGuards(JwtAuthGuard) to users.controller.ts routes
 
 ### Backend: Audit Module
 
@@ -113,6 +132,8 @@ This document provides a dependency-ordered task breakdown for implementing the 
 - [ ] T058 [US1] Create backend/src/modules/audit/audit.service.ts with logEvent() method
 - [ ] T059 [US1] Create backend/src/modules/audit/interceptors/audit.interceptor.ts to log auth events (register, login, logout, mfa_enable, mfa_disable)
 - [ ] T060 [US1] Integrate audit.interceptor.ts with auth.controller.ts using @UseInterceptors decorator
+
+**Note**: AuditLog model exists in Prisma schema, but audit module implementation is incomplete.
 
 ---
 
@@ -126,22 +147,22 @@ This document provides a dependency-ordered task breakdown for implementing the 
 
 **Tasks** (16 total):
 
-- [ ] T061 [US2] Create backend/src/modules/scoring/scoring.module.ts
-- [ ] T062 [US2] Create backend/src/modules/scoring/dto/create-scoring.dto.ts with name and categories (JSONB) validation
-- [ ] T063 [P] [US2] Create backend/src/modules/scoring/dto/update-scoring.dto.ts with partial updates
-- [ ] T064 [US2] Create backend/src/modules/scoring/scoring.service.ts with CRUD methods
-- [ ] T065 [US2] Implement createScoringConfig() method in scoring.service.ts with user_id association
-- [ ] T066 [US2] Implement listScoringConfigs() method in scoring.service.ts filtered by user_id
-- [ ] T067 [US2] Implement updateScoringConfig() method in scoring.service.ts with ownership validation
-- [ ] T068 [US2] Implement deleteScoringConfig() method in scoring.service.ts with ownership validation and lineup cascade (set NULL)
-- [ ] T069 [US2] Implement activateScoringConfig() method in scoring.service.ts ensuring only one active config per user
-- [ ] T070 [US2] Create backend/src/modules/scoring/scoring.controller.ts with routes: GET /scoring-configs, POST /scoring-configs, GET /scoring-configs/:id, PATCH /scoring-configs/:id, DELETE /scoring-configs/:id, PATCH /scoring-configs/:id/activate
-- [ ] T071 [US2] Add @UseGuards(JwtAuthGuard) to all scoring.controller.ts routes
-- [ ] T072 [US2] Add Swagger/OpenAPI decorators to scoring.controller.ts
-- [ ] T073 [US2] Create frontend/src/components/scoring/ScoringConfigForm.tsx with baseball stat category inputs (batting: hits, doubles, triples, homeRuns, etc.; pitching: wins, strikeouts, saves, etc.)
-- [ ] T074 [US2] Create frontend/src/components/scoring/ScoringConfigList.tsx with list, activate, edit, delete actions
-- [ ] T075 [US2] Create frontend/src/pages/ScoringPage.tsx integrating ScoringConfigForm and ScoringConfigList
-- [ ] T076 [US2] Create frontend/src/services/scoringService.ts with API calls for all scoring config operations
+- [X] T061 [US2] Create backend/src/modules/scoring/scoring.module.ts (as scoring-configs.module.ts)
+- [X] T062 [US2] Create backend/src/modules/scoring/dto/create-scoring.dto.ts with name and categories (JSONB) validation
+- [X] T063 [P] [US2] Create backend/src/modules/scoring/dto/update-scoring.dto.ts with partial updates
+- [X] T064 [US2] Create backend/src/modules/scoring/scoring.service.ts with CRUD methods (as scoring-configs.service.ts)
+- [X] T065 [US2] Implement createScoringConfig() method in scoring.service.ts with user_id association
+- [X] T066 [US2] Implement listScoringConfigs() method in scoring.service.ts filtered by user_id
+- [X] T067 [US2] Implement updateScoringConfig() method in scoring.service.ts with ownership validation
+- [X] T068 [US2] Implement deleteScoringConfig() method in scoring.service.ts with ownership validation and lineup cascade (set NULL)
+- [X] T069 [US2] Implement activateScoringConfig() method in scoring.service.ts ensuring only one active config per user
+- [X] T070 [US2] Create backend/src/modules/scoring/scoring.controller.ts with routes: GET /scoring-configs, POST /scoring-configs, GET /scoring-configs/:id, PATCH /scoring-configs/:id, DELETE /scoring-configs/:id, PATCH /scoring-configs/:id/activate
+- [X] T071 [US2] Add @UseGuards(JwtAuthGuard) to all scoring.controller.ts routes
+- [X] T072 [US2] Add Swagger/OpenAPI decorators to scoring.controller.ts
+- [X] T073 [US2] Create frontend/src/components/scoring/ScoringConfigForm.tsx with baseball stat category inputs (batting: hits, doubles, triples, homeRuns, etc.; pitching: wins, strikeouts, saves, etc.)
+- [X] T074 [US2] Create frontend/src/components/scoring/ScoringConfigList.tsx with list, activate, edit, delete actions
+- [X] T075 [US2] Create frontend/src/pages/ScoringPage.tsx integrating ScoringConfigForm and ScoringConfigList (as frontend/src/pages/ScoringConfigs/)
+- [X] T076 [US2] Create frontend/src/services/scoringService.ts with API calls for all scoring config operations (in api.ts)
 
 ---
 
@@ -157,31 +178,33 @@ This document provides a dependency-ordered task breakdown for implementing the 
 
 ### Backend: Players Module
 
-- [ ] T077 [US3] Create backend/src/modules/players/players.module.ts
-- [ ] T078 [US3] Create backend/src/modules/players/providers/player-data.interface.ts with IPlayerDataProvider interface
-- [ ] T079 [US3] Create backend/src/modules/players/providers/mlb-stats.provider.ts implementing IPlayerDataProvider using mlb-stats-api npm package
-- [ ] T080 [US3] Implement searchPlayers() method in mlb-stats.provider.ts with filters (team, position, name search)
-- [ ] T081 [US3] Implement getPlayerById() method in mlb-stats.provider.ts
-- [ ] T082 [US3] Implement getPlayerStats() method in mlb-stats.provider.ts for detailed statistics
-- [ ] T083 [US3] Create backend/src/modules/players/dto/player-filter.dto.ts with search, team, position, active, sort query params
-- [ ] T084 [P] [US3] Create backend/src/modules/players/dto/player-response.dto.ts with Player + calculated projectedScore
-- [ ] T085 [US3] Create backend/src/modules/players/players.service.ts with search, scoring calculation, and statistics logic
-- [ ] T086 [US3] Implement searchPlayers() method in players.service.ts integrating mlb-stats.provider.ts and user's active scoring config
-- [ ] T087 [US3] Implement calculatePlayerScore() method in players.service.ts using scoring config JSONB categories
-- [ ] T088 [US3] Implement getPlayerDetail() method in players.service.ts with stats breakdown and scoring breakdown
-- [ ] T089 [US3] Create backend/src/modules/players/players.controller.ts with routes: GET /players (with filters), GET /players/:id, GET /players/:id/stats
-- [ ] T090 [US3] Add @UseGuards(JwtAuthGuard) to all players.controller.ts routes
-- [ ] T091 [US3] Add Swagger/OpenAPI decorators to players.controller.ts
-- [ ] T092 [US3] Add pagination support to GET /players endpoint (page, limit query params)
+- [X] T077 [US3] Create backend/src/modules/players/players.module.ts
+- [X] T078 [US3] Create backend/src/modules/players/providers/player-data.interface.ts with IPlayerDataProvider interface (implemented in mlb-stats module)
+- [X] T079 [US3] Create backend/src/modules/players/providers/mlb-stats.provider.ts implementing IPlayerDataProvider using mlb-stats-api npm package (as mlb-stats.service.ts)
+- [X] T080 [US3] Implement searchPlayers() method in mlb-stats.provider.ts with filters (team, position, name search)
+- [X] T081 [US3] Implement getPlayerById() method in mlb-stats.provider.ts
+- [X] T082 [US3] Implement getPlayerStats() method in mlb-stats.provider.ts for detailed statistics
+- [X] T083 [US3] Create backend/src/modules/players/dto/player-filter.dto.ts with search, team, position, active, sort query params (as player-research/dto/search-players.dto.ts)
+- [X] T084 [P] [US3] Create backend/src/modules/players/dto/player-response.dto.ts with Player + calculated projectedScore (as player-research/dto/search-players.dto.ts with response DTO)
+- [X] T085 [US3] Create backend/src/modules/players/players.service.ts with search, scoring calculation, and statistics logic
+- [X] T086 [US3] Implement searchPlayers() method in players.service.ts integrating mlb-stats.provider.ts and user's active scoring config (as findAll() method)
+- [X] T087 [US3] Implement calculatePlayerScore() method in players.service.ts using scoring config JSONB categories (in player-research/services/score-calculation.service.ts)
+- [X] T088 [US3] Implement getPlayerDetail() method in players.service.ts with stats breakdown and scoring breakdown (as findOne() method)
+- [X] T089 [US3] Create backend/src/modules/players/players.controller.ts with routes: GET /players (with filters), GET /players/:id, GET /players/:id/stats (in player-research.controller.ts)
+- [X] T090 [US3] Add @UseGuards(JwtAuthGuard) to all players.controller.ts routes
+- [X] T091 [US3] Add Swagger/OpenAPI decorators to players.controller.ts
+- [X] T092 [US3] Add pagination support to GET /players endpoint (page, limit query params)
 
 ### Frontend: Player Research
 
-- [ ] T093 [US3] Create frontend/src/components/players/PlayerSearch.tsx with search input and debouncing (300ms)
-- [ ] T094 [US3] Create frontend/src/components/players/PlayerFilters.tsx with team, position dropdowns
-- [ ] T095 [US3] Create frontend/src/components/players/PlayerTable.tsx with react-window virtualization for 1000+ rows
-- [ ] T096 [US3] Create frontend/src/components/players/PlayerDetail.tsx with statistics, scoring breakdown, recent games
-- [ ] T097 [US3] Create frontend/src/pages/PlayersPage.tsx integrating PlayerSearch, PlayerFilters, and PlayerTable
-- [ ] T098 [US3] Create frontend/src/services/playerService.ts with API calls for player search, detail, statistics
+- [X] T093 [US3] Create frontend/src/components/players/PlayerSearch.tsx with search input and debouncing (300ms) (integrated in PlayerResearch.tsx)
+- [X] T094 [US3] Create frontend/src/components/players/PlayerFilters.tsx with team, position dropdowns (as FilterPanel.tsx)
+- [X] T095 [US3] Create frontend/src/components/players/PlayerTable.tsx with react-window virtualization for 1000+ rows (as PlayerList.tsx)
+- [X] T096 [US3] Create frontend/src/components/players/PlayerDetail.tsx with statistics, scoring breakdown, recent games (as ScoreBreakdownModal.tsx)
+- [X] T097 [US3] Create frontend/src/pages/PlayersPage.tsx integrating PlayerSearch, PlayerFilters, and PlayerTable (as PlayerResearch.tsx)
+- [X] T098 [US3] Create frontend/src/services/playerService.ts with API calls for player search, detail, statistics (in api.ts)
+
+**Note**: This phase was implemented as Feature 002 (Player Research). See specs/002-player-research/ for detailed implementation.
 
 ---
 

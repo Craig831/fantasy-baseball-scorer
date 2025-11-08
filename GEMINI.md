@@ -1,14 +1,10 @@
-# CLAUDE.md
+# GEMINI.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to **Gemini CLI** when working with code in this repository.
 
 ## Project Overview
 
 This repository uses the **Specify framework** - a specification-driven development workflow system that guides feature development from specification through implementation using structured phases and commands.
-
-## Core Workflow Commands
-
-The project uses slash commands (in `.claude/commands/`) that implement the Specify workflow:
 
 ### Feature Development Workflow
 
@@ -23,7 +19,7 @@ The project uses slash commands (in `.claude/commands/`) that implement the Spec
    - Runs `.specify/scripts/bash/setup-plan.sh --json` to set up context
    - Creates plan.md with technical context and architecture decisions
    - Generates design artifacts: research.md, data-model.md, contracts/, quickstart.md
-   - Updates agent-specific context with `.specify/scripts/bash/update-agent-context.sh claude`
+   - Updates agent-specific context with `.specify/scripts/bash/update-agent-context.sh gemini`
    - **Phase 0**: Research and resolve unknowns (NEEDS CLARIFICATION markers)
    - **Phase 1**: Design data models, API contracts, and quickstart scenarios
 
@@ -66,15 +62,6 @@ The project uses slash commands (in `.claude/commands/`) that implement the Spec
 
 ```
 .
-├── .claude/commands/          # Slash commands for Specify workflow
-│   ├── speckit.specify.md     # Feature specification creation
-│   ├── speckit.plan.md        # Implementation planning
-│   ├── speckit.tasks.md       # Task generation
-│   ├── speckit.implement.md   # Implementation execution
-│   ├── speckit.clarify.md     # Specification clarification
-│   ├── speckit.analyze.md     # Cross-artifact analysis
-│   ├── speckit.checklist.md   # Checklist generation
-│   └── speckit.constitution.md # Constitution management
 ├── .specify/
 │   ├── memory/
 │   │   └── constitution.md    # Project-wide development principles
@@ -139,14 +126,8 @@ The project constitution (`.specify/memory/constitution.md`) defines core princi
 - Checklists must be complete before implementation (or explicit approval required)
 
 ## Active Technologies
-- TypeScript 5.0+ / Node.js 20 LTS (001-player-research-scoring, 002-player-research)
-- PostgreSQL 15+ (relational data with JSONB for flexible scoring configs) (001-player-research-scoring, 002-player-research)
-- NestJS 11 (backend framework) (002-player-research)
-- Prisma ORM 6 (database ORM) (002-player-research)
-- React 18 (frontend framework) (002-player-research)
-- Jest (testing framework) (002-player-research)
-- MLB-StatsAPI (external data source for player statistics) (002-player-research)
+- TypeScript 5.0+ / Node.js 20 LTS (001-player-research-scoring)
+- PostgreSQL 15+ (relational data with JSONB for flexible scoring configs) (001-player-research-scoring)
 
 ## Recent Changes
-- 002-player-research: Added NestJS 11, Prisma ORM 6, React 18, Jest, MLB-StatsAPI integration
 - 001-player-research-scoring: Added TypeScript 5.0+ / Node.js 20 LTS

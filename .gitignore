@@ -39,7 +39,6 @@ coverage/
 .nyc_output/
 
 # Prisma
-backend/prisma/migrations/
 !backend/prisma/schema.prisma
 
 # Docker volumes

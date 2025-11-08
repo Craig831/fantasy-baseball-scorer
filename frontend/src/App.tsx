@@ -9,6 +9,7 @@ import VerifyEmailPage from './pages/VerifyEmailPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import ScoringConfigsListPage from './pages/ScoringConfigs/ScoringConfigsListPage';
 import ScoringConfigFormPage from './pages/ScoringConfigs/ScoringConfigFormPage';
+import PlayerResearch from './pages/PlayerResearch';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/scoring-configs" element={<ScoringConfigsListPage />} />
         <Route path="/scoring-configs/new" element={<ScoringConfigFormPage />} />
         <Route path="/scoring-configs/:id/edit" element={<ScoringConfigFormPage />} />
+        <Route path="/player-research" element={<PlayerResearch />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

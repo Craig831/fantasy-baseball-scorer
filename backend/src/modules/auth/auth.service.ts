@@ -474,7 +474,11 @@ export class AuthService {
 
     const refreshToken = randomBytes(32).toString('hex');
     const refreshTokenExpiry = new Date();
-    refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 7); // 7 days
+
+    // Parse refresh token expiry from config (e.g., "30d" -> 30 days)
+    const refreshExpiry = this.configService.get('jwt.refreshTokenExpiry') || '7d';
+    const days = parseInt(refreshExpiry.replace('d', ''), 10) || 7;
+    refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + days);
 
     // Store refresh token
     await this.prisma.refreshToken.create({

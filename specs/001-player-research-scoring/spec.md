@@ -2,8 +2,10 @@
 
 **Feature Branch**: `001-player-research-scoring`
 **Created**: 2025-10-24
-**Status**: Draft
+**Status**: Partially Complete (User Stories 1-2 completed)
 **Input**: User description: "build an application that will provide research and scoring capabilities to registered users. users may either set sport-specific lineups of players or provide sport-specific search filters to research player performance according to player-defined scoring settings."
+
+**Note**: This was the initial monolithic specification. User Stories 1-2 have been completed under this spec. Going forward, each remaining user story will be broken into separate feature specifications (002-player-research, 003-lineup-management, etc.).
 
 ## Clarifications
 
@@ -17,7 +19,7 @@
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - User Account Management (Priority: P1)
+### User Story 1 - User Account Management (Priority: P1) ✅ COMPLETED
 
 As a fantasy sports enthusiast, I need to create an account and manage my profile so that I can access personalized research and scoring features.
 
@@ -36,7 +38,7 @@ As a fantasy sports enthusiast, I need to create an account and manage my profil
 
 ---
 
-### User Story 2 - Scoring Settings Configuration (Priority: P2)
+### User Story 2 - Scoring Settings Configuration (Priority: P2) ✅ COMPLETED
 
 As a user, I need to define and save custom scoring settings so that player performance metrics reflect my league's unique scoring rules.
 
@@ -55,7 +57,7 @@ As a user, I need to define and save custom scoring settings so that player perf
 
 ---
 
-### User Story 3 - Player Research with Filters (Priority: P3)
+### User Story 3 - Player Research with Filters (Priority: P3) ⏳ TODO - Will be spec 002-player-research
 
 As a user, I need to search and filter players based on performance metrics so that I can identify optimal players for my lineup using my custom scoring settings.
 
@@ -74,7 +76,7 @@ As a user, I need to search and filter players based on performance metrics so t
 
 ---
 
-### User Story 4 - Lineup Creation and Scoring (Priority: P4)
+### User Story 4 - Lineup Creation and Scoring (Priority: P4) ⏳ TODO - Will be spec 003-lineup-management
 
 As a user, I need to create sport-specific lineups and see total projected scores so that I can optimize my fantasy team selections.
 
@@ -94,7 +96,7 @@ As a user, I need to create sport-specific lineups and see total projected score
 
 ---
 
-### User Story 5 - Mobile-Optimized Interface (Priority: P5)
+### User Story 5 - Mobile-Optimized Interface (Priority: P5) ⏳ TODO - Cross-cutting concern for all features
 
 As a mobile user, I need a responsive interface optimized for small screens so that I can research players and manage lineups on my phone.
 
