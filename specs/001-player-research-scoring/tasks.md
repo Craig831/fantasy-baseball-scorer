@@ -16,7 +16,7 @@ This document provides a dependency-ordered task breakdown for implementing the 
 - **Data Source**: mlb-stats-api npm package
 
 **Total Tasks**: 155
-**Completed Tasks**: 111
+**Completed Tasks**: 117
 **MVP Scope**: Phase 3 (User Story 1 - P1) = 30 tasks
 
 ## Progress Summary
@@ -25,16 +25,16 @@ This document provides a dependency-ordered task breakdown for implementing the 
 |-------|--------|-----------|-------|-------|
 | Phase 1: Setup | ✅ Complete | 18/18 | 18 | All tasks complete |
 | Phase 2: Foundation | ✅ Complete | 12/12 | 12 | All infrastructure tasks complete |
-| Phase 3: User Auth (US1) | 🟢 Mostly Complete | 24/30 | 30 | Missing: local strategy, MFA DTO, audit module |
+| Phase 3: User Auth (US1) | ✅ Complete | 30/30 | 30 | Local strategy, MFA DTO/Guard, Audit Module complete |
 | Phase 4: Scoring (US2) | ✅ Complete | 16/16 | 16 | Fully implemented |
 | Phase 5: Player Research (US3) | ✅ Complete | 22/22 | 22 | Implemented as Feature 002 |
 | Phase 6: Lineups (US4) | 🔴 Not Started | 0/24 | 24 | Schema exists, no implementation |
 | Phase 7: Background Jobs | 🔴 Not Started | 0/8 | 8 | Not implemented |
 | Phase 8: Mobile (US5) | 🔴 Not Started | 0/13 | 13 | Not implemented |
 | Phase 9: Polish | 🔴 Not Started | 0/12 | 12 | Not implemented |
-| **Total** | 🟡 **72% Complete** | **111/155** | **155** | |
+| **Total** | 🟡 **75% Complete** | **117/155** | **155** | |
 
-**Ready for**: Phase 6 (Lineup Creation) or completing remaining Phase 3 tasks
+**Ready for**: Phase 6 (Lineup Creation)
 
 ---
 
@@ -97,13 +97,13 @@ This document provides a dependency-ordered task breakdown for implementing the 
 ### Backend: Auth Module
 
 - [X] T031 [US1] Create backend/src/modules/auth/auth.module.ts with Passport and JWT module imports
-- [ ] T032 [US1] Create backend/src/modules/auth/strategies/local.strategy.ts for email/password validation
+- [X] T032 [US1] Create backend/src/modules/auth/strategies/local.strategy.ts for email/password validation (with validateUser method)
 - [X] T033 [US1] Create backend/src/modules/auth/strategies/jwt.strategy.ts for JWT token validation
 - [X] T034 [US1] Create backend/src/modules/auth/guards/jwt-auth.guard.ts to protect routes (in common/guards/)
-- [ ] T035 [US1] Create backend/src/modules/auth/guards/mfa.guard.ts for MFA verification
+- [X] T035 [US1] Create backend/src/modules/auth/guards/mfa.guard.ts for MFA verification (checks X-MFA-Token header or mfaToken body)
 - [X] T036 [US1] Create backend/src/modules/auth/dto/register.dto.ts with email and password validation
 - [X] T037 [P] [US1] Create backend/src/modules/auth/dto/login.dto.ts with email, password, and optional mfaCode
-- [ ] T038 [P] [US1] Create backend/src/modules/auth/dto/mfa.dto.ts for MFA setup and verification
+- [X] T038 [P] [US1] Create backend/src/modules/auth/dto/mfa.dto.ts for MFA setup and verification (VerifyMfaDto, DisableMfaDto, MfaSetupResponseDto)
 - [X] T039 [US1] Create backend/src/modules/auth/auth.service.ts with registration, login, token generation logic
 - [X] T040 [US1] Implement register() method in auth.service.ts with bcrypt hashing and email verification token generation
 - [X] T041 [US1] Implement login() method in auth.service.ts with credential validation and JWT issuance
@@ -118,7 +118,7 @@ This document provides a dependency-ordered task breakdown for implementing the 
 
 - [X] T048 [US1] Create backend/src/modules/users/users.module.ts
 - [X] T049 [US1] Create backend/src/modules/users/dto/update-user.dto.ts for profile updates
-- [ ] T050 [P] [US1] Create backend/src/modules/users/dto/user-response.dto.ts for safe user data exposure (exclude password_hash)
+- [X] T050 [P] [US1] Create backend/src/modules/users/dto/user-response.dto.ts for safe user data exposure (UserResponseDto.fromEntity method excludes passwordHash, mfaSecret, tokens)
 - [X] T051 [US1] Create backend/src/modules/users/users.service.ts with CRUD methods for user profile
 - [X] T052 [US1] Implement getUserProfile() method in users.service.ts
 - [X] T053 [US1] Implement updateUserProfile() method in users.service.ts
@@ -128,12 +128,12 @@ This document provides a dependency-ordered task breakdown for implementing the 
 
 ### Backend: Audit Module
 
-- [ ] T057 [US1] Create backend/src/modules/audit/audit.module.ts
-- [ ] T058 [US1] Create backend/src/modules/audit/audit.service.ts with logEvent() method
-- [ ] T059 [US1] Create backend/src/modules/audit/interceptors/audit.interceptor.ts to log auth events (register, login, logout, mfa_enable, mfa_disable)
-- [ ] T060 [US1] Integrate audit.interceptor.ts with auth.controller.ts using @UseInterceptors decorator
+- [X] T057 [US1] Create backend/src/modules/audit/audit.module.ts (imports PrismaModule, exports AuditService)
+- [X] T058 [US1] Create backend/src/modules/audit/audit.service.ts with logEvent(), logAuthEvent(), logDataEvent() methods
+- [X] T059 [US1] Create backend/src/modules/audit/interceptors/audit.interceptor.ts to log auth events (register, login, email_verified, password_reset, mfa_enabled, mfa_disabled)
+- [X] T060 [US1] Integrate audit.interceptor.ts with auth.controller.ts using @UseInterceptors(AuditInterceptor) decorator (manual audit logs removed from auth.service.ts)
 
-**Note**: AuditLog model exists in Prisma schema, but audit module implementation is incomplete.
+**Note**: Audit module fully implemented with automatic IP address and user agent capture.
 
 ---
 

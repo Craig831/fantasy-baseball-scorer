@@ -6,16 +6,21 @@ import {
   HttpStatus,
   Get,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { VerifyMfaDto, DisableMfaDto, MfaSetupResponseDto } from './dto/mfa.dto';
+import { UserResponseDto } from '../users/dto/user-response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { AuditInterceptor } from '../audit/interceptors/audit.interceptor';
 
 @ApiTags('Authentication')
 @Controller('auth')
+@UseInterceptors(AuditInterceptor)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -58,11 +63,11 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current authenticated user' })
-  @ApiResponse({ status: 200, description: 'User profile returned' })
+  @ApiResponse({ status: 200, description: 'User profile returned', type: UserResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getCurrentUser(@CurrentUser() user: any) {
     return {
-      data: user,
+      data: UserResponseDto.fromEntity(user),
     };
   }
 
@@ -120,7 +125,7 @@ export class AuthController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Setup MFA - generates secret and QR code' })
-  @ApiResponse({ status: 200, description: 'MFA setup initiated' })
+  @ApiResponse({ status: 200, description: 'MFA setup initiated', type: MfaSetupResponseDto })
   @ApiResponse({ status: 400, description: 'MFA already enabled' })
   async setupMFA(@CurrentUser() user: any) {
     const result = await this.authService.setupMFA(user.id);
@@ -136,8 +141,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify MFA code and enable MFA' })
   @ApiResponse({ status: 200, description: 'MFA enabled successfully' })
   @ApiResponse({ status: 400, description: 'Invalid MFA code' })
-  async verifyMFA(@CurrentUser() user: any, @Body('token') token: string) {
-    const result = await this.authService.verifyMFA(user.id, token);
+  async verifyMFA(@CurrentUser() user: any, @Body() dto: VerifyMfaDto) {
+    const result = await this.authService.verifyMFA(user.id, dto.token);
     return {
       data: result,
     };
@@ -150,8 +155,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Disable MFA (requires MFA code)' })
   @ApiResponse({ status: 200, description: 'MFA disabled successfully' })
   @ApiResponse({ status: 400, description: 'Invalid MFA code or MFA not enabled' })
-  async disableMFA(@CurrentUser() user: any, @Body('token') token: string) {
-    const result = await this.authService.disableMFA(user.id, token);
+  async disableMFA(@CurrentUser() user: any, @Body() dto: DisableMfaDto) {
+    const result = await this.authService.disableMFA(user.id, dto.token);
     return {
       data: result,
     };

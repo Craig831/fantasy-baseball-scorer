@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UserResponseDto } from '../users/dto/user-response.dto';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import * as speakeasy from 'speakeasy';
@@ -21,6 +22,33 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {}
+
+  /**
+   * Validate user credentials for Passport LocalStrategy
+   * Used by LocalStrategy to verify email/password combination
+   * @param email - User email address
+   * @param password - Plain text password
+   * @returns User object if valid, null if invalid
+   */
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    // Check if user exists and account is not deleted
+    if (!user || user.deletedAt) {
+      return null;
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      return null;
+    }
+
+    // Return user (passwordHash excluded by caller)
+    return user;
+  }
 
   async register(registerDto: RegisterDto) {
     const { email, password } = registerDto;
@@ -48,31 +76,15 @@ export class AuthService {
         emailVerificationToken,
         emailVerified: false, // In production, require email verification
       },
-      select: {
-        id: true,
-        email: true,
-        emailVerified: true,
-        createdAt: true,
-      },
     });
 
     // Generate tokens
     const tokens = await this.generateTokens(user.id, user.email);
 
-    // Create audit log
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'USER_REGISTERED',
-        entityType: 'User',
-        entityId: user.id,
-        ipAddress: '127.0.0.1', // Should come from request
-        metadata: { email: user.email },
-      },
-    });
+    // Audit logging now handled by AuditInterceptor
 
     return {
-      user,
+      user: UserResponseDto.fromEntity(user),
       ...tokens,
     };
   }
@@ -123,26 +135,10 @@ export class AuthService {
     // Generate tokens
     const tokens = await this.generateTokens(user.id, user.email);
 
-    // Create audit log
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'USER_LOGIN',
-        entityType: 'User',
-        entityId: user.id,
-        ipAddress: '127.0.0.1', // Should come from request
-        metadata: { email: user.email, mfaUsed: user.mfaEnabled },
-      },
-    });
+    // Audit logging now handled by AuditInterceptor
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        emailVerified: user.emailVerified,
-        mfaEnabled: user.mfaEnabled,
-        createdAt: user.createdAt,
-      },
+      user: UserResponseDto.fromEntity(user),
       ...tokens,
     };
   }
@@ -199,17 +195,7 @@ export class AuthService {
       },
     });
 
-    // Create audit log
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'EMAIL_VERIFIED',
-        entityType: 'User',
-        entityId: user.id,
-        ipAddress: '127.0.0.1',
-        metadata: { email: user.email },
-      },
-    });
+    // Audit logging now handled by AuditInterceptor
 
     return { message: 'Email verified successfully' };
   }
@@ -304,17 +290,7 @@ export class AuthService {
       data: { revoked: true },
     });
 
-    // Create audit log
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'PASSWORD_RESET',
-        entityType: 'User',
-        entityId: user.id,
-        ipAddress: '127.0.0.1',
-        metadata: { email: user.email },
-      },
-    });
+    // Audit logging now handled by AuditInterceptor
 
     return { message: 'Password reset successfully' };
   }
@@ -383,17 +359,7 @@ export class AuthService {
       data: { mfaEnabled: true },
     });
 
-    // Create audit log
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'MFA_ENABLED',
-        entityType: 'User',
-        entityId: user.id,
-        ipAddress: '127.0.0.1',
-        metadata: { email: user.email },
-      },
-    });
+    // Audit logging now handled by AuditInterceptor
 
     return { message: 'MFA enabled successfully' };
   }
@@ -428,17 +394,7 @@ export class AuthService {
       },
     });
 
-    // Create audit log
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'MFA_DISABLED',
-        entityType: 'User',
-        entityId: user.id,
-        ipAddress: '127.0.0.1',
-        metadata: { email: user.email },
-      },
-    });
+    // Audit logging now handled by AuditInterceptor
 
     return { message: 'MFA disabled successfully' };
   }
