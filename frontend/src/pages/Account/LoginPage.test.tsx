@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import LoginPage from './LoginPage';
-import api from '../services/api';
+import api from '../../services/api';
 
 // Mock react-router-dom
 const mockNavigate = vi.fn();

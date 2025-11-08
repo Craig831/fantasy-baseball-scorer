@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { LineupList } from '../components/lineups/LineupList';
+import { LineupList } from '../../components/lineups/LineupList';
 
 export const LineupsPage: React.FC = () => {
   return (

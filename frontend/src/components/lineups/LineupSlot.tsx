@@ -88,7 +88,7 @@ export const LineupSlot: React.FC<LineupSlotProps> = ({
         <div className="flex-shrink-0 text-right">
           <div className="text-xs text-gray-500">Score</div>
           <div className="text-sm font-semibold text-gray-900">
-            {slot.projectedScore.toFixed(2)}
+            {Number(slot.projectedScore).toFixed(2)}
           </div>
         </div>
       )}

@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { LineupEditor } from '../components/lineups/LineupEditor';
+import { LineupEditor } from '../../components/lineups/LineupEditor';
 
 export const LineupEditorPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

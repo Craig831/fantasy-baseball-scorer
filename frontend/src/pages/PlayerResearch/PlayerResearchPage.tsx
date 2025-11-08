@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import FilterPanel from '../components/player-research/FilterPanel';
-import PlayerList from '../components/player-research/PlayerList';
-import ScoringConfigSelector from '../components/player-research/ScoringConfigSelector';
-import ScoreBreakdownModal from '../components/player-research/ScoreBreakdownModal';
-import { Player, PlayerSearchFilters, ScoreBreakdown } from '../types/player';
-import { searchPlayers, getPositions, getPlayerScoreBreakdown } from '../services/api';
+import FilterPanel from '../../components/player-research/FilterPanel';
+import PlayerList from '../../components/player-research/PlayerList';
+import ScoringConfigSelector from '../../components/player-research/ScoringConfigSelector';
+import ScoreBreakdownModal from '../../components/player-research/ScoreBreakdownModal';
+import { Player, PlayerSearchFilters, ScoreBreakdown } from '../../types/player';
+import { searchPlayers, getPositions, getPlayerScoreBreakdown } from '../../services/api';
 import './PlayerResearch.css';
 
 interface SearchResponse {
@@ -130,39 +130,8 @@ const PlayerResearch: React.FC = () => {
     setSelectedPlayer(null);
   };
 
-  // Handle logout
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    navigate('/login');
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">Fantasy Baseball Scorer</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/')}
-                className="text-gray-700 hover:text-gray-900"
-              >
-                Home
-              </button>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       <div className="player-research-page">
       <div className="page-header">
         <h1>Player Research</h1>

@@ -1,25 +1,32 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Header } from './components/common/Header';
 import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import VerifyEmailPage from './pages/VerifyEmailPage';
-import AccountSettingsPage from './pages/AccountSettingsPage';
+import LoginPage from './pages/Account/LoginPage';
+import RegisterPage from './pages/Account/RegisterPage';
+import ForgotPasswordPage from './pages/Account/ForgotPasswordPage';
+import ResetPasswordPage from './pages/Account/ResetPasswordPage';
+import VerifyEmailPage from './pages/Account/VerifyEmailPage';
+import AccountSettingsPage from './pages/Account/AccountSettingsPage';
 import ScoringConfigsListPage from './pages/ScoringConfigs/ScoringConfigsListPage';
 import ScoringConfigFormPage from './pages/ScoringConfigs/ScoringConfigFormPage';
-import PlayerResearch from './pages/PlayerResearch';
-import { LineupsPage } from './pages/LineupsPage';
-import { LineupEditorPage } from './pages/LineupEditorPage';
+import PlayerResearch from './pages/PlayerResearch/PlayerResearchPage';
+import { LineupsPage } from './pages/Lineups/LineupsPage';
+import { LineupEditorPage } from './pages/Lineups/LineupEditorPage';
 
 const queryClient = new QueryClient();
 
-function App() {
+// Routes that should NOT show the header (auth pages)
+const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'];
+
+function AppContent() {
+  const location = useLocation();
+  const showHeader = !authRoutes.includes(location.pathname);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
+    <>
+      {showHeader && <Header />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -38,7 +45,16 @@ function App() {
         <Route path="/lineups/:id/edit" element={<LineupEditorPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Router>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <AppContent />
+      </Router>
     </QueryClientProvider>
   );
 }

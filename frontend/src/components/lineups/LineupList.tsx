@@ -137,7 +137,7 @@ export const LineupList: React.FC = () => {
                 <div>
                   <div className="text-sm font-medium text-gray-500">Score</div>
                   <div className="mt-1 text-lg font-semibold text-gray-900">
-                    {lineup.projectedScore.toFixed(2)}
+                    {Number(lineup.projectedScore).toFixed(2)}
                   </div>
                 </div>
               </div>
