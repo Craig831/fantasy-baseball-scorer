@@ -24,7 +24,7 @@ const PlayerResearch: React.FC = () => {
   const [filters, setFilters] = useState<PlayerSearchFilters>({
     position: [],
     league: 'both',
-    statisticType: 'hitting',
+    statisticType: 'batting',
     status: 'active',
     season: new Date().getFullYear(),
   });
@@ -152,28 +152,21 @@ const PlayerResearch: React.FC = () => {
       )}
 
       <div className="page-content">
-        <aside className="filters-sidebar">
-          <FilterPanel
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            positions={positions}
-            onLoadPositions={loadPositions}
-          />
-        </aside>
+        <FilterPanel
+          onFiltersApplied={handleFilterChange}
+        />
 
-        <main className="players-main">
-          <PlayerList
-            players={players}
-            loading={loading}
-            error={error}
-            pagination={pagination}
-            onPageChange={handlePageChange}
-            onPlayerClick={handlePlayerClick}
-            onScoreClick={handleScoreClick}
-            onSortChange={handleSortChange}
-            statisticType={filters.statisticType || 'hitting'}
-          />
-        </main>
+        <PlayerList
+          players={players}
+          loading={loading}
+          error={error}
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          onPlayerClick={handlePlayerClick}
+          onScoreClick={handleScoreClick}
+          onSortChange={handleSortChange}
+          statisticType={filters.statisticType || 'batting'}
+        />
       </div>
 
       {scoreBreakdown && selectedPlayer && (

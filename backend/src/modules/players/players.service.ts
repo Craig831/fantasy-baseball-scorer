@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { SearchPlayersDto } from '../player-research/dto/search-players.dto';
+import { SearchPlayersDto, StatisticType } from '../player-research/dto/search-players.dto';
 import { Player } from './entities/player.entity';
 import { Prisma } from '@prisma/client';
 import { ScoringConfigsService } from '../scoring-configs/scoring-configs.service';
@@ -28,7 +28,7 @@ export class PlayersService {
     total: number;
   }> {
     const {
-      position,
+      positions,
       league,
       status,
       season,
@@ -46,17 +46,17 @@ export class PlayersService {
     const where: Prisma.PlayerWhereInput = {};
 
     // Filter by statistic type and position
-    if (statisticType === 'hitting') {
-      // For hitting, exclude pitchers unless specifically selected
-      if (position && position.length > 0) {
-        where.position = { in: position };
+    if (statisticType === StatisticType.BATTING) {
+      // For batting, exclude pitchers unless specifically selected
+      if (positions && positions.length > 0) {
+        where.position = { in: positions };
       } else {
         where.position = { notIn: ['P'] };
       }
-    } else if (statisticType === 'pitching') {
+    } else if (statisticType === StatisticType.PITCHING) {
       // For pitching, only include pitchers unless specifically selected
-      if (position && position.length > 0) {
-        where.position = { in: position };
+      if (positions && positions.length > 0) {
+        where.position = { in: positions };
       } else {
         where.position = { in: ['P'] };
       }

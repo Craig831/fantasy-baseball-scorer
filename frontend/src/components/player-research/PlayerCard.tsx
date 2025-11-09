@@ -6,7 +6,7 @@ interface PlayerCardProps {
   player: Player;
   onClick?: () => void;
   onScoreClick?: () => void;
-  statisticType: 'hitting' | 'pitching';
+  statisticType: 'batting' | 'pitching';
 }
 
 const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick, onScoreClick, statisticType }) => {

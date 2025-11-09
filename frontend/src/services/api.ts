@@ -93,7 +93,7 @@ export const searchPlayers = async (
   };
 
   if (filters.position && filters.position.length > 0) {
-    params.position = filters.position;
+    params.positions = filters.position;
   }
 
   if (filters.league) {
@@ -135,7 +135,7 @@ export const searchPlayers = async (
   const response = await api.get('/players', {
     params,
     paramsSerializer: {
-      indexes: null, // Use repeat format: position=1B&position=OF instead of position[]=1B
+      indexes: null, // Use repeat format: positions=1B&positions=OF instead of positions[]=1B
     },
   });
   return response.data;
