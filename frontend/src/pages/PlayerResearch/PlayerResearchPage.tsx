@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import FilterPanel from '../../components/player-research/FilterPanel';
 import PlayerList from '../../components/player-research/PlayerList';
 import ScoringConfigSelector from '../../components/player-research/ScoringConfigSelector';
@@ -21,13 +21,30 @@ interface SearchResponse {
 
 const PlayerResearch: React.FC = () => {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<PlayerSearchFilters>({
-    position: [],
-    league: 'both',
-    statisticType: 'batting',
-    status: 'active',
-    season: new Date().getFullYear(),
-  });
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Initialize filters from URL params or defaults
+  const getInitialFilters = (): PlayerSearchFilters => {
+    const positions = searchParams.getAll('position');
+    const league = searchParams.get('league') as 'both' | 'AL' | 'NL' | null;
+    const statisticType = searchParams.get('statisticType') as 'batting' | 'pitching' | null;
+    const status = searchParams.get('status');
+    const season = searchParams.get('season');
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
+
+    return {
+      position: positions.length > 0 ? positions : [],
+      league: league || 'both',
+      statisticType: statisticType || 'batting',
+      status: status || 'active',
+      season: season ? parseInt(season, 10) : new Date().getFullYear(),
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+    };
+  };
+
+  const [filters, setFilters] = useState<PlayerSearchFilters>(getInitialFilters());
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [pagination, setPagination] = useState<SearchResponse['pagination'] | null>(null);
@@ -89,6 +106,20 @@ const PlayerResearch: React.FC = () => {
   // Handle filter changes
   const handleFilterChange = (newFilters: PlayerSearchFilters) => {
     setFilters(newFilters);
+
+    // Update URL parameters for shareable searches
+    const params = new URLSearchParams();
+    if (newFilters.position && newFilters.position.length > 0) {
+      newFilters.position.forEach(pos => params.append('position', pos));
+    }
+    if (newFilters.league) params.set('league', newFilters.league);
+    if (newFilters.statisticType) params.set('statisticType', newFilters.statisticType);
+    if (newFilters.status) params.set('status', newFilters.status);
+    if (newFilters.season) params.set('season', newFilters.season.toString());
+    if (newFilters.dateFrom) params.set('dateFrom', newFilters.dateFrom);
+    if (newFilters.dateTo) params.set('dateTo', newFilters.dateTo);
+
+    setSearchParams(params, { replace: true });
     performSearch(newFilters, 1, scoringConfigId, sortBy, sortOrder);
   };
 
