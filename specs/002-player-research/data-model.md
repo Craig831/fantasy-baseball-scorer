@@ -2,11 +2,11 @@
 
 **Feature**: Player Research
 **Branch**: feature/player-research
-**Date**: 2025-10-29
+**Date**: 2025-11-09 (Updated)
 
 ## Overview
 
-This document defines the data models for player research functionality, including MLB player entities, statistics caching, and saved search persistence. Models extend the existing database schema (User, ScoringConfiguration, AuditLog).
+This document defines the data models for player research functionality, including MLB player entities, statistics caching, and saved search persistence with support for the updated filter panel (statistic type toggle, season, status, date range, position checkboxes) and dynamic column display based on scoring configuration. Models extend the existing database schema (User, ScoringConfiguration, AuditLog).
 
 ## Entity Relationship Diagram
 
@@ -223,26 +223,37 @@ Stores user-defined search filter combinations for quick reuse.
 
 ```json
 {
-  "filterVersion": 1,
-  "position": "Pitcher",
-  "team": "Yankees",
-  "dateFrom": "2024-04-01",
-  "dateTo": "2024-09-30",
+  "filterVersion": 2,
+  "statisticType": "batting",
+  "positions": ["First Base", "Third Base"],
+  "season": 2024,
   "status": "active",
-  "sortBy": "score",
+  "dateRange": {
+    "from": "2024-04-01",
+    "to": "2024-09-30"
+  },
+  "sortBy": "totalPoints",
   "sortOrder": "desc"
 }
 ```
 
-**Filter Fields** (all optional):
-- `filterVersion` (integer): Schema version for evolution
-- `position` (string): Player position filter
-- `team` (string): Team name filter
-- `dateFrom` (ISO date string): Start date for statistics
-- `dateTo` (ISO date string): End date for statistics
-- `status` (string): Player status filter
-- `sortBy` (string): Sort column (score, name, position, team, stat fields)
-- `sortOrder` (string): Sort direction (asc, desc)
+**Filter Fields** (all optional unless noted):
+- `filterVersion` (integer, required): Schema version for evolution (current: 2)
+- `statisticType` (string): Player type filter - 'batting' or 'pitching' (default: 'batting')
+- `positions` (array of strings): Player positions filter (empty array = all positions)
+  - Batter positions: "Catcher", "First Base", "Second Base", "Third Base", "Shortstop", "Outfield", "Designated Hitter"
+  - Pitcher positions: "Pitcher"
+- `season` (integer): MLB season year (default: current year, must be 1876-present)
+- `status` (string): Player status filter - 'active', 'inactive', 'retired' (default: 'active')
+- `dateRange` (object): Date range for statistics
+  - `from` (ISO date string, nullable): Start date (null = season start)
+  - `to` (ISO date string, nullable): End date (null = current date or season end)
+- `sortBy` (string): Sort column - 'totalPoints', 'pointsPerGame', 'name', 'position', 'team', or stat field keys (default: 'totalPoints')
+- `sortOrder` (string): Sort direction - 'asc' or 'desc' (default: 'desc')
+
+**Schema Evolution Notes**:
+- **Version 1**: Original schema with `position` (string), `team` (string), `dateFrom`/`dateTo` separate fields
+- **Version 2** (current): Added `statisticType`, changed `position` to `positions` (array), added `season`, added `dateRange` object, removed `team` filter
 
 **Indices**:
 - Primary key on `id`

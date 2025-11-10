@@ -200,7 +200,7 @@ model SavedSearch {
   id                      String                  @id @default(uuid())
   userId                  String                  @map("user_id")
   name                    String                  @db.VarChar(100)
-  filters                 Json
+  filters                 Json                    // Supports filterVersion 2 schema: {filterVersion, statisticType, positions[], season, status, dateRange, sortBy, sortOrder}
   scoringConfigurationId  String?                 @map("scoring_configuration_id")
   createdAt               DateTime                @default(now()) @map("created_at")
   updatedAt               DateTime                @updatedAt @map("updated_at")

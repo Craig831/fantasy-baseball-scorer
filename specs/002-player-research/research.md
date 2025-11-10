@@ -1,12 +1,12 @@
 # Research: Player Research Feature
 
-**Date**: 2025-10-29
+**Date**: 2025-11-09 (Updated)
 **Feature**: Player Research
-**Branch**: feature/player-research
+**Branch**: 002-player-research
 
 ## Overview
 
-This document captures research findings for implementing player research functionality with MLB player data integration, performance optimization for score calculations, and saved search persistence.
+This document captures research findings for implementing player research functionality with MLB player data integration, performance optimization for score calculations, saved search persistence, and the updated UI requirements for horizontal filter panel with explicit apply/clear logic and dynamic column display based on scoring configuration.
 
 ## 1. MLB-StatsAPI Integration
 
@@ -103,7 +103,299 @@ MLB-StatsAPI to Database:
 - Stores `lastUpdated` timestamp
 - Off-season: daily updates
 
-## 2. Player Statistics Caching Strategy
+## 2. Accessibility Compliance (WCAG 2.1 AA)
+
+### Decision
+
+Implement WCAG 2.1 AA compliant filter panel and data table using **React ARIA patterns** and **semantic HTML** with the following approach:
+
+- **Filter Panel Structure**: Use `<fieldset>` and `<legend>` for grouping filters by line, native form controls with proper labels
+- **Toggle Control (Statistic Type)**: Implement as radio button group with `role="radiogroup"` and `aria-checked` states
+- **Button States**: Use `aria-disabled="true"` with visual styling that meets 3:1 contrast ratio minimum for disabled state
+- **Dynamic Table**: Use semantic `<table>` with `<th scope="col">`, ARIA live regions (`aria-live="polite"`) for column changes
+- **Keyboard Navigation**: Full tab order, Enter/Space for button activation, Arrow keys for radio group navigation
+- **Focus Indicators**: Visible 2px outline with 4.5:1 contrast ratio, never removed programmatically
+
+### Rationale
+
+- **Constitution Requirement**: Project constitution mandates WCAG compliance (Section I: Accessibility first)
+- **Legal Compliance**: WCAG 2.1 AA is required for ADA Section 508 compliance
+- **Native Controls**: HTML native elements (radio, checkbox, button) provide built-in accessibility vs. custom div-based controls
+- **React ARIA**: Adobe's React ARIA library provides tested, accessible primitives for complex interactions
+- **Semantic Tables**: Screen readers understand native `<table>` structure; `<th scope="col">` properly announces column headers
+
+### Implementation Guidelines
+
+**Color Contrast**:
+- Text: 4.5:1 minimum (body text)
+- UI Components: 3:1 minimum (buttons, form controls)
+- Disabled buttons: 3:1 minimum for border/background differentiation
+
+**Touch Targets** (mobile-first requirement):
+- Minimum 44x44px for all interactive elements
+- Applies to filter checkboxes, Apply/Clear buttons, column sort controls
+
+**Form Control Labels**:
+- All inputs must have associated `<label>` or `aria-label`
+- Toggle control: `aria-labelledby` linking to group label
+- Position checkboxes: Each checkbox has visible label text
+
+**Dynamic Content Announcements**:
+- Apply filters: `aria-live="polite"` region announces "Filters applied: {count} players found"
+- Column changes: `aria-live="polite"` announces "Table updated: showing {count} columns"
+- Score recalculation: `aria-live="polite"` announces "Scores recalculated"
+
+**Keyboard Patterns**:
+- Tab: Navigate between filter groups, buttons, table controls
+- Arrow keys: Navigate within radio group (statistic type toggle)
+- Space/Enter: Activate buttons, toggle checkboxes
+- Escape: Clear focus from current element
+
+**Testing Requirements**:
+- Manual testing with NVDA (Windows) and VoiceOver (Mac)
+- Automated testing with axe-core
+- Keyboard-only navigation testing
+- Mobile screen reader testing (TalkBack, VoiceOver iOS)
+
+### Alternatives Considered
+
+| Alternative | Why Rejected |
+|-------------|--------------|
+| **Custom toggle with div + onClick** | Requires extensive ARIA work, error-prone, doesn't convey state to assistive tech |
+| **Material-UI/Chakra alone** | Component libraries vary in accessibility quality; React ARIA provides verified primitives |
+| **WCAG 2.0 A/AA** | WCAG 2.1 includes mobile improvements (orientation, touch target size) critical for mobile-first design |
+| **Skip accessibility testing** | Constitution violation, legal liability, ethical requirement |
+
+---
+
+## 3. Filter State Management (Pending vs. Applied)
+
+### Decision
+
+Implement filter state management using **React state with pending/applied pattern**:
+
+```typescript
+type FilterState = {
+  pending: FilterCriteria;     // Current form values (not yet applied)
+  applied: FilterCriteria;     // Last applied filters (drives API query)
+  isDirty: boolean;            // True if pending !== applied
+};
+
+type FilterCriteria = {
+  statisticType: 'batting' | 'pitching';
+  positions: string[];         // Array of selected positions
+  season: number;              // Year (e.g., 2024)
+  status: string;              // 'active', 'injured', etc.
+  dateRange: {
+    from: Date | null;
+    to: Date | null;
+  };
+};
+```
+
+**Button Enabling Logic**:
+- `applyButtonEnabled = isDirty && isValid(pending)`
+- `clearButtonEnabled = !isEqual(applied, defaultFilters)`
+
+**URL Synchronization**:
+- Serialize `applied` filters to URL query params on Apply click
+- Parse URL params on page load to restore filter state
+- Enables shareable/bookmarkable searches
+
+### Rationale
+
+- **Spec Requirements**: FR-005 (Apply enabled when changes exist), FR-006 (Clear enabled when filters applied), FR-014 (Apply-to-execute pattern)
+- **User Control**: Prevents accidental filtering on each keystroke, gives explicit control via Apply button
+- **isDirty Flag**: Simplifies button logic, clearly signals unsaved changes to user
+- **Immutability**: Using separate pending/applied states prevents accidental mutations
+- **URL State**: Enables browser back/forward, bookmarking, sharing searches
+
+### Implementation Guidelines
+
+**Default Filters**:
+```typescript
+const defaultFilters: FilterCriteria = {
+  statisticType: 'batting',
+  positions: [],              // Empty = all positions
+  season: new Date().getFullYear(),
+  status: 'active',
+  dateRange: { from: null, to: null }  // null = season-to-date
+};
+```
+
+**Dirty Detection**:
+- Use `lodash.isEqual` for deep equality comparison
+- Compare `pending` vs. `applied` to set `isDirty`
+- Re-compute on every filter change
+
+**Validation Rules**:
+- Date range: `from` must be ≤ `to` if both specified
+- Season: Must be valid MLB season (1876-present)
+- At least one position OR positions array empty (all positions)
+
+**Clear Behavior**:
+- Resets `pending` and `applied` to `defaultFilters`
+- Does NOT clear to empty state (season defaults to current, status to active)
+
+**URL Encoding**:
+```typescript
+const params = new URLSearchParams({
+  type: filters.statisticType,
+  positions: filters.positions.join(','),
+  season: filters.season.toString(),
+  status: filters.status,
+  from: filters.dateRange.from?.toISOString() || '',
+  to: filters.dateRange.to?.toISOString() || ''
+});
+history.pushState(null, '', `?${params.toString()}`);
+```
+
+### Alternatives Considered
+
+| Alternative | Why Rejected |
+|-------------|--------------|
+| **Auto-apply on change** | Violates spec (explicit Apply button required), expensive queries on each keystroke |
+| **Single state object** | Can't distinguish pending vs. applied, breaks button enabling logic |
+| **Redux/Zustand** | Overkill for feature-scoped state, adds complexity and bundle size |
+| **Form library (React Hook Form)** | Unnecessary dependency for simple filter form |
+| **Local Storage for state** | URL params better for shareability, more transparent to users |
+
+---
+
+## 4. Dynamic Column Display
+
+### Decision
+
+Implement **dynamic column rendering** using a configuration resolver that determines visible columns based on:
+
+1. **Player position type** (batter vs. pitcher) from `statisticType` filter
+2. **Active scoring configuration** (which stats have non-zero point values)
+
+**Column Resolver Logic**:
+```typescript
+function resolveColumns(
+  statisticType: 'batting' | 'pitching',
+  scoringConfig: ScoringConfig
+): Column[] {
+  // Base columns always shown
+  const baseColumns: Column[] = [
+    { key: 'playerName', label: 'Player', sortable: true, sticky: true },
+    { key: 'position', label: 'Pos', sortable: true, sticky: true },
+    { key: 'teamAbbr', label: 'Team', sortable: true, sticky: true },
+    { key: 'totalPoints', label: 'PTS', sortable: true, sticky: false },
+    { key: 'pointsPerGame', label: 'PPG', sortable: true, sticky: false },
+  ];
+
+  // Stat columns filtered by scoring config
+  const allStatColumns = statisticType === 'batting'
+    ? BATTER_STAT_COLUMNS
+    : PITCHER_STAT_COLUMNS;
+
+  const scoredStatColumns = allStatColumns.filter(col =>
+    scoringConfig.hasPoints(col.statKey)
+  );
+
+  return [...baseColumns, ...scoredStatColumns];
+}
+```
+
+**Stat Column Definitions**:
+```typescript
+const BATTER_STAT_COLUMNS: Column[] = [
+  { key: 'gp', label: 'GP', statKey: 'gamesPlayed', sortable: true },
+  { key: 'ab', label: 'AB', statKey: 'atBats', sortable: true },
+  { key: 'h', label: 'H', statKey: 'hits', sortable: true },
+  { key: '2b', label: '2B', statKey: 'doubles', sortable: true },
+  { key: '3b', label: '3B', statKey: 'triples', sortable: true },
+  { key: 'hr', label: 'HR', statKey: 'homeRuns', sortable: true },
+  { key: 'r', label: 'R', statKey: 'runs', sortable: true },
+  { key: 'rbi', label: 'RBI', statKey: 'runsBattedIn', sortable: true },
+  { key: 'bb', label: 'BB', statKey: 'baseOnBalls', sortable: true },
+  { key: 'k', label: 'K', statKey: 'strikeOuts', sortable: true },
+  { key: 'sb', label: 'SB', statKey: 'stolenBases', sortable: true },
+  { key: 'cs', label: 'CS', statKey: 'caughtStealing', sortable: true },
+];
+
+const PITCHER_STAT_COLUMNS: Column[] = [
+  { key: 'gp', label: 'GP', statKey: 'gamesPlayed', sortable: true },
+  { key: 'gs', label: 'GS', statKey: 'gamesStarted', sortable: true },
+  { key: 'w', label: 'W', statKey: 'wins', sortable: true },
+  { key: 'l', label: 'L', statKey: 'losses', sortable: true },
+  { key: 's', label: 'S', statKey: 'saves', sortable: true },
+  { key: 'h', label: 'H', statKey: 'holds', sortable: true },
+  { key: 'er', label: 'ER', statKey: 'earnedRuns', sortable: true },
+  { key: 'bb', label: 'BB', statKey: 'baseOnBalls', sortable: true },
+  { key: 'k', label: 'K', statKey: 'strikeOuts', sortable: true },
+];
+```
+
+**Responsive Breakpoints**:
+- **Desktop (≥1024px)**: Show all resolved columns, horizontal scroll if needed
+- **Tablet (768-1023px)**: Show base columns + top 6 stat columns sorted by scoring weight
+- **Mobile (<768px)**: Show base columns only; tap row to expand for full stats
+
+**Sort State Handling**:
+- If currently sorted column is removed: Reset to default sort (PTS descending)
+- Otherwise: Preserve sort column and direction
+
+### Rationale
+
+- **FR-020 Requirement**: "only display statistical columns that are included in the active scoring configuration"
+- **Reduces Visual Clutter**: Hiding unscored stats focuses attention on what matters
+- **Position-Specific Stats**: Batters and pitchers have completely different stat sets
+- **Responsive Design**: Mobile-first approach with progressive enhancement for larger screens
+- **Scoring Philosophy**: UI reflects what the scoring system values
+
+### Implementation Guidelines
+
+**Sticky Columns** (horizontal scroll):
+```css
+.player-table th.sticky,
+.player-table td.sticky {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 1;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+}
+```
+
+**Column Change Announcement** (accessibility):
+```typescript
+useEffect(() => {
+  const columnCount = columns.length;
+  const columnNames = columns.map(c => c.label).join(', ');
+  announce(`Table updated: showing ${columnCount} columns: ${columnNames}`);
+}, [columns]);
+```
+
+**Loading State** (prevent layout shift):
+```tsx
+{isRecalculating && (
+  <div className="table-skeleton">
+    {/* Show skeleton columns matching previous column count */}
+  </div>
+)}
+```
+
+**Number Formatting**:
+- Whole numbers: 0 decimals (HR, RBI, K)
+- Averages: 3 decimals (.310)
+- Percentages: 1 decimal (31.0%)
+
+### Alternatives Considered
+
+| Alternative | Why Rejected |
+|-------------|--------------|
+| **Show all stats always** | Violates FR-020, creates visual clutter, confuses users about what's valued |
+| **User-selectable columns** | Not in spec, adds complexity, conflicts with scoring-driven philosophy |
+| **Fixed column set per position** | Ignores scoring config, doesn't adapt to user's league rules |
+| **Virtual scrolling (react-window)** | Overkill for 25-50 players (SC-007), accessibility challenges |
+| **Card layout on mobile** | Table better for sorting and scanning multiple players |
+
+---
+
+## 5. Player Statistics Caching Strategy
 
 ### Decision
 
@@ -177,7 +469,7 @@ Indices required:
 - `PlayerStatistic.dateFrom, dateTo` (btree)
 - `PlayerStatistic.statistics` (GIN for JSONB queries)
 
-## 3. Score Calculation Performance
+## 6. Score Calculation Performance
 
 ### Decision
 
@@ -240,7 +532,7 @@ LIMIT 50 OFFSET :offset;
 - Target: < 200ms for score calculation
 - Fallback: Pre-calculate top 100 players per config (background job)
 
-## 4. Saved Search Data Model
+## 7. Saved Search Data Model
 
 ### Decision
 
@@ -306,7 +598,7 @@ Example evolution:
 - Support null scoring configuration (shows raw stats)
 - Audit log for saved search CRUD operations
 
-## 5. Additional Considerations
+## Additional Considerations
 
 ### API Rate Limiting
 
@@ -391,9 +683,12 @@ CREATE INDEX idx_saved_search_user ON SavedSearch(userId);
 ## Summary
 
 This research establishes:
-1. Direct HTTP integration with MLB Stats API for player data
-2. PostgreSQL with JSONB for flexible statistics caching
-3. Server-side score calculation with selective caching
-4. JSON-based saved search model with scoring config references
+1. **MLB-StatsAPI Integration**: Direct HTTP integration with hourly batch updates and granular caching strategy
+2. **Accessibility Compliance**: WCAG 2.1 AA standards using React ARIA patterns and semantic HTML
+3. **Filter State Management**: Pending/applied pattern with explicit Apply/Clear button logic
+4. **Dynamic Column Display**: Configuration-driven columns based on position type and scoring config
+5. **Player Statistics Caching**: PostgreSQL with JSONB for flexible statistics storage
+6. **Score Calculation Performance**: Server-side calculation with selective caching for optimal performance
+7. **Saved Search Data Model**: JSON-based filter storage with scoring configuration references
 
-All decisions support the feature requirements while maintaining performance, scalability, and maintainability goals.
+All decisions support the updated feature requirements (horizontal filter panel, dynamic columns, apply/clear logic) while maintaining performance, scalability, accessibility, and maintainability goals per project constitution.
