@@ -16,23 +16,41 @@ import { Player } from '../../players/entities/player.entity';
 export enum PlayerStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
-  INJURED = 'injured',
+  RETIRED = 'retired',
+}
+
+export enum StatisticType {
+  BATTING = 'batting',
+  PITCHING = 'pitching',
 }
 
 /**
- * DTO for searching and filtering players
+ * DTO for searching and filtering players (filterVersion 2)
+ * Updated to align with new horizontal filter panel requirements
  */
 export class SearchPlayersDto {
   @ApiPropertyOptional({
-    description: 'Filter by positions (e.g., ["P", "DH", "1B"])',
-    example: ['P', 'DH'],
+    description: 'Statistic type to filter players by (batting or pitching)',
+    example: 'batting',
+    enum: StatisticType,
+  })
+  @IsOptional()
+  @IsEnum(StatisticType)
+  statisticType?: StatisticType;
+
+  @ApiPropertyOptional({
+    description: 'Filter by positions (e.g., ["P", "DH", "1B"]), empty array = all positions',
+    example: ['1B', '2B', 'SS'],
     type: [String],
   })
   @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @Transform(({ value }) => {
+    if (!value) return [];
+    return Array.isArray(value) ? value : [value];
+  })
   @IsArray()
   @IsString({ each: true })
-  position?: string[];
+  positions?: string[];
 
   @ApiPropertyOptional({
     description: 'Filter by league (AL, NL, or both)',
@@ -47,6 +65,7 @@ export class SearchPlayersDto {
     description: 'Filter by player status',
     example: 'active',
     enum: PlayerStatus,
+    default: PlayerStatus.ACTIVE,
   })
   @IsOptional()
   @IsEnum(PlayerStatus)
@@ -64,7 +83,7 @@ export class SearchPlayersDto {
   season?: number;
 
   @ApiPropertyOptional({
-    description: 'Filter statistics from this date (ISO format)',
+    description: 'Filter statistics from this date (ISO format, null = season start)',
     example: '2024-04-01',
   })
   @IsOptional()
@@ -72,7 +91,7 @@ export class SearchPlayersDto {
   dateFrom?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter statistics to this date (ISO format)',
+    description: 'Filter statistics to this date (ISO format, null = current date)',
     example: '2024-10-31',
   })
   @IsOptional()
@@ -109,15 +128,6 @@ export class SearchPlayersDto {
   @IsOptional()
   @IsUUID()
   scoringConfigId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Statistic type filter (hitting or pitching)',
-    example: 'hitting',
-    enum: ['hitting', 'pitching'],
-  })
-  @IsOptional()
-  @IsString()
-  statisticType?: string;
 
   @ApiPropertyOptional({
     description: 'Sort field (score, name, position, team, season, status)',

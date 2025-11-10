@@ -2,11 +2,11 @@
 
 **Feature**: Player Research
 **Branch**: feature/player-research
-**Date**: 2025-10-29
+**Date**: 2025-11-09 (Updated)
 
 ## Overview
 
-This document provides end-to-end integration scenarios for the player research feature, demonstrating how components interact to deliver user value. Each scenario shows API calls, data flow, and expected outcomes.
+This document provides end-to-end integration scenarios for the player research feature with updated UI (horizontal filter panel with Apply/Clear buttons) and dynamic column display based on scoring configuration. Each scenario shows API calls, data flow, and expected outcomes.
 
 ## Prerequisites
 
@@ -16,23 +16,37 @@ This document provides end-to-end integration scenarios for the player research 
 
 ## Scenario 1: User Applies Filters and Views Scored Players
 
-**User Goal**: Search for active pitchers on the Yankees with scores based on my custom scoring configuration.
+**User Goal**: Search for active pitchers with scores based on my custom scoring configuration using the horizontal filter panel with explicit Apply button.
 
 ### Steps
 
 1. **User navigates to Player Research page**
-   - Frontend loads with empty filter state
-   - Displays message: "Apply filters to search for players"
+   - Frontend loads with default filter state:
+     - Statistic Type: "Batting" (toggle)
+     - Positions: [] (all positions)
+     - Season: 2024 (current year)
+     - Status: "Active"
+     - Date Range: null (season-to-date)
+   - Apply button: **disabled** (no changes made)
+   - Clear button: **disabled** (default filters applied)
+   - Player listing shows all active batters
 
-2. **User selects filters**:
-   - Position: "Pitcher"
-   - Team: "Yankees"
-   - Date range: "2024 Season" (defaults to current season)
+2. **User modifies filters** (filter panel line-by-line):
+   - **Line 1**: Clicks "Pitching" toggle (statistic type changes)
+   - **Line 1**: Selects Season: "2024"
+   - **Line 1**: Status remains "Active"
+   - **Line 2**: Checks position checkbox: "Pitcher"
+   - Apply button: **enabled** (pending changes detected)
+   - Clear button: **disabled** (filters not yet applied)
+   - Player listing: **still showing batters** (filters not yet applied)
 
-3. **Frontend makes API request**:
+3. **User clicks Apply button**:
+   - Apply button becomes **disabled**
+   - Clear button becomes **enabled**
+   - Frontend makes API request:
 
 ```http
-GET /api/players?position=Pitcher&team=Yankees&dateFrom=2024-04-01&dateTo=2024-09-30&page=1&limit=50
+GET /api/players?statisticType=pitching&positions=Pitcher&season=2024&status=active&page=1&limit=50&sortBy=totalPoints&sortOrder=desc
 Authorization: Bearer {jwt_token}
 ```
 
@@ -41,10 +55,11 @@ Authorization: Bearer {jwt_token}
    - Retrieves user's active scoring configuration
    - Queries Player table with filters:
      ```sql
-     WHERE position = 'Pitcher' AND team = 'Yankees' AND status = 'active'
+     WHERE position = 'Pitcher' AND status = 'active'
+     JOIN PlayerStatistic WHERE season = 2024 AND statisticType = 'pitching'
      ```
-   - Joins PlayerStatistic table for date range
-   - Calculates scores using scoring configuration
+   - Calculates totalPoints and pointsPerGame using scoring configuration
+   - Determines which statistics columns to return (only stats with points in config)
    - Returns paginated results
 
 5. **Backend response**:
@@ -55,80 +70,105 @@ Authorization: Bearer {jwt_token}
     {
       "id": "a1b2c3d4-...",
       "mlbPlayerId": 543037,
-      "name": "Gerrit Cole",
+      "name": "Cole, Gerrit",
       "position": "Pitcher",
-      "team": "Yankees",
+      "teamAbbr": "NYY",
       "status": "active",
-      "score": 287.5,
+      "totalPoints": 287.5,
+      "pointsPerGame": 8.98,
       "statistics": {
-        "gamesStarted": 32,
-        "wins": 16,
-        "era": "2.99",
-        "strikeouts": 234,
-        "inningsPitched": "201.2"
+        "gp": 32,
+        "gs": 32,
+        "w": 16,
+        "l": 9,
+        "s": 0,
+        "er": 67,
+        "bb": 48,
+        "k": 234
       },
-      "lastUpdated": "2024-10-29T15:00:00Z"
+      "lastUpdated": "2024-11-09T15:00:00Z"
     },
     {
       "id": "e5f6g7h8-...",
       "mlbPlayerId": 669373,
-      "name": "Carlos Rodon",
+      "name": "Rodon, Carlos",
       "position": "Pitcher",
-      "team": "Yankees",
+      "teamAbbr": "NYY",
       "status": "active",
-      "score": 195.3,
+      "totalPoints": 195.3,
+      "pointsPerGame": 6.98,
       "statistics": {
-        "gamesStarted": 28,
-        "wins": 11,
-        "era": "3.85",
-        "strikeouts": 178,
-        "inningsPitched": "165.1"
+        "gp": 28,
+        "gs": 28,
+        "w": 11,
+        "l": 10,
+        "s": 0,
+        "er": 71,
+        "bb": 61,
+        "k": 178
       },
-      "lastUpdated": "2024-10-29T15:00:00Z"
+      "lastUpdated": "2024-11-09T15:00:00Z"
     }
   ],
   "pagination": {
     "page": 1,
     "limit": 50,
-    "total": 12,
-    "totalPages": 1
+    "total": 145,
+    "totalPages": 3
   },
   "meta": {
-    "lastUpdated": "2024-10-29T15:00:00Z",
+    "lastUpdated": "2024-11-09T15:00:00Z",
     "scoringConfigName": "My Custom League Rules"
   }
 }
 ```
 
 6. **Frontend displays results**:
-   - Renders table with players sorted by score (highest first)
-   - Shows player name, position, team, score, key statistics
-   - Displays "Last updated" timestamp
-   - Shows which scoring configuration was used
+   - Renders table with dynamic columns based on scoring config:
+     - **Base columns (always shown)**: Player Name, Pos, Team, PTS, PPG
+     - **Stat columns (only if in scoring config)**: GP, GS, W, L, S, ER, BB, K
+     - Note: "H" (holds) column NOT shown because scoring config doesn't include holds
+   - Player names formatted: "Lastname, Firstname"
+   - Team abbreviations: "NYY" instead of "New York Yankees"
+   - Sorted by totalPoints descending
+   - Apply button: **disabled** (no pending changes)
+   - Clear button: **enabled** (filters applied)
+
+7. **User clicks Clear button**:
+   - All filters reset to defaults (batting, all positions, current season, active, no date range)
+   - Apply button: **disabled** (defaults applied immediately)
+   - Clear button: **disabled** (back to default state)
+   - Player listing refreshes with default filters
 
 ### Success Criteria
 
 - ✅ Results returned in < 5 seconds
-- ✅ Only pitchers from Yankees displayed
-- ✅ Scores calculated based on user's active configuration
-- ✅ Players sorted by score descending
+- ✅ Only pitchers displayed after Apply clicked
+- ✅ Filters don't execute until Apply button clicked
+- ✅ Apply button only enabled when changes pending
+- ✅ Clear button only enabled when non-default filters applied
+- ✅ Scores calculated as totalPoints and pointsPerGame
+- ✅ Columns dynamically displayed based on scoring configuration
+- ✅ Team abbreviations shown (NYY, LAA, etc.)
 
 ---
 
 ## Scenario 2: User Saves and Reuses a Search
 
-**User Goal**: Save my current filter combination so I can quickly access "Yankees Pitchers" again later.
+**User Goal**: Save my current filter combination so I can quickly access "2024 Pitchers" again later.
 
 ### Steps
 
 1. **User has filters applied** (from Scenario 1)
-   - Position: Pitcher
-   - Team: Yankees
-   - Date range: 2024 Season
+   - Statistic Type: Pitching
+   - Positions: [Pitcher]
+   - Season: 2024
+   - Status: Active
+   - Date Range: null (season-to-date)
 
 2. **User clicks "Save Search" button**
    - Modal opens prompting for search name
-   - User enters: "Yankees Pitchers"
+   - User enters: "2024 Pitchers"
 
 3. **Frontend makes API request**:
 
@@ -138,13 +178,18 @@ Authorization: Bearer {jwt_token}
 Content-Type: application/json
 
 {
-  "name": "Yankees Pitchers",
+  "name": "2024 Pitchers",
   "filters": {
-    "position": "Pitcher",
-    "team": "Yankees",
-    "dateFrom": "2024-04-01",
-    "dateTo": "2024-09-30",
-    "sortBy": "score",
+    "filterVersion": 2,
+    "statisticType": "pitching",
+    "positions": ["Pitcher"],
+    "season": 2024,
+    "status": "active",
+    "dateRange": {
+      "from": null,
+      "to": null
+    },
+    "sortBy": "totalPoints",
     "sortOrder": "desc"
   },
   "scoringConfigurationId": "config-uuid-123"
@@ -165,36 +210,47 @@ Content-Type: application/json
 {
   "data": {
     "id": "search-uuid-456",
-    "name": "Yankees Pitchers",
+    "name": "2024 Pitchers",
     "filters": {
-      "position": "Pitcher",
-      "team": "Yankees",
-      "dateFrom": "2024-04-01",
-      "dateTo": "2024-09-30",
-      "sortBy": "score",
+      "filterVersion": 2,
+      "statisticType": "pitching",
+      "positions": ["Pitcher"],
+      "season": 2024,
+      "status": "active",
+      "dateRange": {
+        "from": null,
+        "to": null
+      },
+      "sortBy": "totalPoints",
       "sortOrder": "desc"
     },
     "scoringConfigurationId": "config-uuid-123",
     "scoringConfigurationName": "My Custom League Rules",
-    "createdAt": "2024-10-29T16:30:00Z",
-    "updatedAt": "2024-10-29T16:30:00Z"
+    "createdAt": "2024-11-09T16:30:00Z",
+    "updatedAt": "2024-11-09T16:30:00Z"
   }
 }
 ```
 
 6. **User navigates away and returns later**
    - Opens Player Research page
-   - Sees "Saved Searches" dropdown with "Yankees Pitchers"
-   - Selects "Yankees Pitchers" from dropdown
+   - Sees "Saved Searches" dropdown with "2024 Pitchers"
+   - Selects "2024 Pitchers" from dropdown
 
 7. **Frontend loads saved search**:
+   - Applies filters to filter panel (populates statistic type toggle, position checkboxes, season, status)
+   - Automatically clicks Apply (executes search)
+   - Makes API request:
 
 ```http
-GET /api/players?position=Pitcher&team=Yankees&dateFrom=2024-04-01&dateTo=2024-09-30&scoringConfigId=config-uuid-123&sortBy=score&sortOrder=desc&page=1&limit=50
+GET /api/players?statisticType=pitching&positions=Pitcher&season=2024&status=active&scoringConfigId=config-uuid-123&sortBy=totalPoints&sortOrder=desc&page=1&limit=50
 Authorization: Bearer {jwt_token}
 ```
 
 8. **Results displayed instantly** (same as Scenario 1)
+   - Filter panel shows applied filters
+   - Apply button: **disabled** (no pending changes)
+   - Clear button: **enabled** (non-default filters applied)
 
 ### Success Criteria
 
@@ -205,15 +261,17 @@ Authorization: Bearer {jwt_token}
 
 ---
 
-## Scenario 3: User Changes Scoring Configuration and Sees Scores Update
+## Scenario 3: User Changes Scoring Configuration and Sees Scores and Columns Update
 
-**User Goal**: Compare how different scoring rules affect player rankings.
+**User Goal**: Compare how different scoring rules affect player rankings and see which stats are valued in each configuration.
 
 ### Steps
 
 1. **User has players displayed** (from Scenario 1)
    - Currently using "My Custom League Rules" config
-   - Gerrit Cole has score of 287.5
+   - Gerrit Cole has totalPoints: 287.5, pointsPerGame: 8.98
+   - Columns shown: Player, Pos, Team, PTS, PPG, GP, GS, W, L, S, ER, BB, K
+   - Note: "H" (holds) column NOT shown (not in this config)
 
 2. **User opens scoring configuration dropdown**
    - Frontend fetches user's scoring configurations:
@@ -223,18 +281,20 @@ GET /api/scoring-configurations
 Authorization: Bearer {jwt_token}
 ```
 
-3. **User selects different configuration**: "Standard Points League"
+3. **User selects different configuration**: "Standard Points League with Holds"
+   - This config includes points for Holds (H), but removes Saves (S)
 
 4. **Frontend re-fetches players with new config**:
 
 ```http
-GET /api/players?position=Pitcher&team=Yankees&dateFrom=2024-04-01&dateTo=2024-09-30&scoringConfigId=config-uuid-789&page=1&limit=50
+GET /api/players?statisticType=pitching&positions=Pitcher&season=2024&status=active&scoringConfigId=config-uuid-789&page=1&limit=50&sortBy=totalPoints&sortOrder=desc
 Authorization: Bearer {jwt_token}
 ```
 
 5. **Backend recalculates scores**:
    - Uses new scoring configuration rules
    - Applies different point values to statistics
+   - Determines which statistics to return (now includes H, excludes S)
    - Returns updated results
 
 6. **Backend response**:
@@ -245,35 +305,55 @@ Authorization: Bearer {jwt_token}
     {
       "id": "a1b2c3d4-...",
       "mlbPlayerId": 543037,
-      "name": "Gerrit Cole",
+      "name": "Cole, Gerrit",
       "position": "Pitcher",
-      "team": "Yankees",
+      "teamAbbr": "NYY",
       "status": "active",
-      "score": 423.8,
-      "statistics": { ... },
-      "lastUpdated": "2024-10-29T15:00:00Z"
+      "totalPoints": 423.8,
+      "pointsPerGame": 13.24,
+      "statistics": {
+        "gp": 32,
+        "gs": 32,
+        "w": 16,
+        "l": 9,
+        "h": 2,
+        "er": 67,
+        "bb": 48,
+        "k": 234
+      },
+      "lastUpdated": "2024-11-09T15:00:00Z"
     },
     ...
   ],
   "meta": {
-    "lastUpdated": "2024-10-29T15:00:00Z",
-    "scoringConfigName": "Standard Points League"
+    "lastUpdated": "2024-11-09T15:00:00Z",
+    "scoringConfigName": "Standard Points League with Holds"
   }
 }
 ```
 
 7. **Frontend updates display**:
-   - Scores recalculated and displayed
-   - Player rankings may change
-   - Configuration name updated in UI
+   - **Scores recalculated**: totalPoints and pointsPerGame updated
+   - **Columns dynamically change**:
+     - New columns: Player, Pos, Team, PTS, PPG, GP, GS, W, L, **H** (added), ER, BB, K
+     - **S** (saves) column REMOVED (not in new config)
+   - Player rankings may change based on new scores
+   - Configuration name updated in UI: "Standard Points League with Holds"
+   - ARIA live region announces: "Table updated: showing 12 columns. Scores recalculated."
    - Visual indicator shows scores have changed
+
+8. **User can click on player's totalPoints to see breakdown**:
+   - Shows which statistics contributed to new score
+   - Example: "W: 16 × 5pts = 80pts, K: 234 × 1pt = 234pts, H: 2 × 3pts = 6pts, ..."
 
 ### Success Criteria
 
 - ✅ Scores recalculate within 2 seconds
 - ✅ New configuration name displayed
 - ✅ Player rankings update based on new scores
-- ✅ Statistics remain unchanged (only scores change)
+- ✅ **Columns dynamically adjust** (H added, S removed)
+- ✅ Statistics remain unchanged (only scores and visible columns change)
+- ✅ Accessibility announcement for column/score changes
 
 ---
 

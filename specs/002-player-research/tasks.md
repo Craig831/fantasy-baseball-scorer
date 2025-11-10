@@ -1,11 +1,18 @@
-# Tasks: Player Research
+# Tasks: Player Research (Updated for New Requirements)
 
 **Input**: Design documents from `/specs/002-player-research/`
-**Prerequisites**: plan.md, spec.md, data-model.md, contracts/, research.md, quickstart.md
+**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/player-research-api.yaml
 
-**Tests**: This feature includes comprehensive testing as specified in the constitution (unit tests, e2e tests) and existing test standards.
+**Tests**: Tests are NOT explicitly requested in the specification. Test tasks are excluded per specification guidelines.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+
+**Note**: This tasks.md reflects the UPDATED specification requirements:
+- Horizontal filter panel with Apply/Clear button controls
+- Dynamic column display based on scoring configuration
+- Filter state management (pending/applied pattern)
+- Updated API parameters (statisticType, positions array, season)
+- New response format (totalPoints, pointsPerGame, teamAbbr)
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -15,39 +22,41 @@
 
 ## Path Conventions
 
-- **Web app**: `backend/src/`, `frontend/src/`
-- All paths use the existing NestJS/React structure
+Based on plan.md project structure:
+- **Backend**: `backend/src/`
+- **Frontend**: `frontend/src/`
+- **Tests**: `backend/tests/`, `frontend/tests/`
 
 ---
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Project initialization and database schema updates for player research feature
+**Purpose**: Project initialization and module structure
 
-- [X] T001 Create Prisma schema models for Player, PlayerStatistic, and SavedSearch in backend/prisma/schema.prisma
-- [X] T002 Generate Prisma migration for new player research tables
-- [X] T003 [P] Create backend module structure: backend/src/modules/players/, backend/src/modules/player-research/, backend/src/modules/mlb-stats/
-- [X] T004 [P] Create frontend component structure: frontend/src/components/player-research/, frontend/src/pages/PlayerResearch.tsx
-- [X] T005 [P] Install MLB-StatsAPI HTTP client dependencies in backend/package.json
-- [X] T006 Run Prisma migration to create Player, PlayerStatistic, and SavedSearch tables
+- [x] T001 Update Prisma schema for SavedSearch model with filterVersion 2 in backend/prisma/schema.prisma
+- [x] T002 Run Prisma migration for SavedSearch schema updates
+- [x] T003 [P] Add React ARIA library dependency to frontend package.json for accessibility
+- [x] T004 [P] Add lodash.isEqual dependency to frontend package.json for filter state management
+- [x] T005 [P] Create filter state types in frontend/src/features/player-research/types/filter-state.ts
+- [x] T006 [P] Create player result types with new schema in frontend/src/features/player-research/types/player-result.ts
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
+**Purpose**: Core infrastructure updates for new filter panel and dynamic columns
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T007 Create MLB-StatsAPI client service in backend/src/modules/mlb-stats/mlb-stats.service.ts
-- [X] T008 Implement MLB API response DTOs in backend/src/modules/mlb-stats/dto/
-- [X] T009 Create players module with service and controller in backend/src/modules/players/
-- [X] T010 [P] Create player-research module with service and controller in backend/src/modules/player-research/
-- [X] T011 [P] Create TypeScript types for Player and PlayerStatistic in frontend/src/types/player.ts
-- [X] T012 Implement background job scheduler service in backend/src/modules/players/jobs/player-stats-refresh.service.ts
-- [X] T013 Configure NestJS Schedule module in backend/src/app.module.ts
-- [X] T014 [P] Create initial data seeding script to populate Player table from MLB API
-- [X] T015 Test MLB API integration and data seeding (manual verification)
+- [x] T007 Update FilterCriteria DTO with new parameters (statisticType, positions array, season) in backend/src/modules/player-research/dto/filter-criteria.dto.ts
+- [x] T008 Update PlayerResult DTO with new fields (totalPoints, pointsPerGame, teamAbbr) in backend/src/modules/player-research/dto/player-result.dto.ts
+- [x] T009 Create column configuration resolver service in backend/src/modules/player-research/services/column-configuration.service.ts
+- [x] T010 [P] Update GET /api/players endpoint to accept new filter parameters in backend/src/modules/player-research/player-research.controller.ts
+- [x] T011 [P] Update player search service to handle statisticType filter in backend/src/modules/player-research/player-research.service.ts
+- [x] T012 [P] Update player search service to handle positions array filter in backend/src/modules/player-research/player-research.service.ts
+- [x] T013 [P] Update player search service to handle season filter in backend/src/modules/player-research/player-research.service.ts
+- [x] T014 Implement team abbreviation mapping (full name → 3-letter code) in backend/src/modules/player-research/player-research.service.ts
+- [x] T015 Implement player name formatting (lastname, firstname) in backend/src/modules/player-research/player-research.service.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -55,251 +64,285 @@
 
 ## Phase 3: User Story 1 - Basic Player Search and Filtering (Priority: P1) 🎯 MVP
 
-**Goal**: Enable users to search and filter baseball players using standard criteria (position, team, date range)
+**Goal**: Enable users to search and filter baseball players using standard criteria with horizontal filter panel and explicit Apply/Clear button controls
 
-**Independent Test**: Log in, navigate to player research page, apply filters (position="Pitcher", team="Yankees"), and view filtered list of players. Verify only Yankees pitchers are displayed.
+**Independent Test**: Log in, access player research page, modify filters in horizontal panel, click Apply button, verify filtered list displays. Verify Clear button resets to defaults. Verify filters don't execute until Apply clicked.
 
-### Backend Implementation
+### Implementation for User Story 1
 
-- [X] T016 [P] [US1] Create Player entity and DTO in backend/src/modules/players/entities/player.entity.ts
-- [X] T017 [P] [US1] Create PlayerStatistic entity and DTO in backend/src/modules/players/entities/player-statistic.entity.ts
-- [X] T018 [US1] Create SearchPlayersDto with filter parameters in backend/src/modules/player-research/dto/search-players.dto.ts
-- [X] T019 [US1] Implement PlayersService.findAll() with filtering logic in backend/src/modules/players/players.service.ts
-- [X] T020 [US1] Add database indices for position, team, and date range in Prisma schema (if not done in T001)
-- [X] T021 [US1] Implement GET /api/players endpoint in backend/src/modules/player-research/player-research.controller.ts
-- [X] T022 [P] [US1] Implement GET /api/players/:id endpoint for player details in backend/src/modules/player-research/player-research.controller.ts
-- [X] T023 [P] [US1] Add pagination support to search endpoint (page, limit parameters)
+**Backend - Filter API Updates**
 
-### Frontend Implementation
+- [x] T016 [US1] Add validation for new filter parameters (statisticType enum, season range) in backend/src/modules/player-research/dto/filter-criteria.dto.ts
+- [x] T017 [US1] Update filter query builder to use positions array instead of single position in backend/src/modules/player-research/player-research.service.ts
+- [x] T018 [US1] Update filter query builder to filter by season year in backend/src/modules/player-research/player-research.service.ts
+- [x] T019 [US1] Update response format to return teamAbbr instead of full team name in backend/src/modules/player-research/player-research.service.ts
 
-- [X] T024 [P] [US1] Create PlayerResearch page component in frontend/src/pages/PlayerResearch.tsx
-- [X] T025 [P] [US1] Create FilterPanel component with position, team, date range controls in frontend/src/components/player-research/FilterPanel.tsx
-- [X] T026 [P] [US1] Create PlayerList component to display search results in frontend/src/components/player-research/PlayerList.tsx
-- [X] T027 [P] [US1] Create PlayerCard component for individual player display in frontend/src/components/player-research/PlayerCard.tsx
-- [X] T028 [US1] Implement API service methods for player search in frontend/src/services/api.ts
-- [X] T029 [US1] Connect FilterPanel to API and update PlayerList on filter changes
-- [X] T030 [P] [US1] Implement pagination controls in PlayerList component
-- [X] T031 [P] [US1] Add loading states and error handling to PlayerResearch page
+**Frontend - Horizontal Filter Panel UI (3-line layout)**
 
-### Testing
+- [x] T020 [P] [US1] REDESIGN FilterPanel component with horizontal 3-line layout in frontend/src/components/player-research/FilterPanel.tsx
+- [x] T021 [P] [US1] Implement statistic type toggle control (batting/pitching) on line 1 in FilterPanel
+- [x] T022 [P] [US1] Implement season dropdown on line 1 in FilterPanel
+- [x] T023 [P] [US1] Implement status dropdown on line 1 in FilterPanel
+- [x] T024 [P] [US1] Implement date range inputs on line 1 in FilterPanel
+- [x] T025 [P] [US1] Implement position checkboxes on line 2 in FilterPanel
+- [x] T026 [US1] Implement Apply and Clear buttons (right-justified) on line 3 in FilterPanel
 
-- [X] T032 [P] [US1] Write unit tests for PlayersService filtering logic in backend/src/modules/players/players.service.spec.ts
-- [X] T033 [P] [US1] Write unit tests for SearchPlayersDto validation in backend/src/modules/player-research/dto/search-players.dto.spec.ts
-- [ ] T034 [P] [US1] Write e2e tests for GET /api/players with various filters in backend/test/player-research.e2e-spec.ts
-- [ ] T035 [P] [US1] Write React component tests for FilterPanel in frontend/src/components/player-research/FilterPanel.test.tsx
-- [ ] T036 [P] [US1] Write React component tests for PlayerList in frontend/src/components/player-research/PlayerList.test.tsx
+**Frontend - Filter State Management (Pending/Applied Pattern)**
 
-**US1 Complete**: Users can search and filter players by position, team, and date range
+- [x] T027 [US1] CREATE usePlayerFilters hook with pending/applied state pattern in frontend/src/hooks/usePlayerFilters.ts
+- [x] T028 [US1] Implement isDirty calculation (lodash.isEqual) in usePlayerFilters hook
+- [x] T029 [US1] Implement button enabling logic (Apply enabled when isDirty, Clear enabled when non-default) in usePlayerFilters hook
+- [x] T030 [US1] Implement filter validation (date range, season) in usePlayerFilters hook
+- [x] T031 [US1] Implement Clear button behavior (reset to defaults: batting, all positions, current season, active) in usePlayerFilters hook
+- [x] T032 [US1] Implement Apply button behavior (copy pending to applied, trigger search) in usePlayerFilters hook
+- [x] T033 [US1] Implement default filter values in usePlayerFilters hook
+
+**Frontend - Player Listing Updates**
+
+- [ ] T034 [US1] Update PlayerListing to display teamAbbr instead of full team name in frontend/src/components/player-research/PlayerListing.tsx
+- [ ] T035 [US1] Update PlayerListing to format player names as "Lastname, Firstname" in frontend/src/components/player-research/PlayerListing.tsx
+- [ ] T036 [US1] Update player-research service to use new filter parameters in frontend/src/services/player-research.service.ts
+- [ ] T037 [US1] Update usePlayerResults hook to only fetch on Apply (not on filter change) in frontend/src/hooks/usePlayerResults.ts
+
+**Accessibility (WCAG 2.1 AA)**
+
+- [x] T038 [P] [US1] Add fieldset and legend to filter panel for grouping in FilterPanel
+- [x] T039 [P] [US1] Implement statistic type toggle as radio group with role="radiogroup" and aria-checked in FilterPanel
+- [x] T040 [P] [US1] Add aria-disabled to Apply/Clear buttons based on enabled state in FilterPanel
+- [x] T041 [P] [US1] Implement keyboard navigation for toggle control (arrow keys) in FilterPanel
+- [x] T042 [P] [US1] Add focus indicators (2px outline, 4.5:1 contrast) to all interactive elements in FilterPanel
+- [x] T043 [P] [US1] Add aria-live="polite" region for filter application announcements in FilterPanel
+- [x] T044 [P] [US1] Ensure 44x44px touch targets for all buttons and checkboxes (mobile-first) in FilterPanel
+- [x] T045 [P] [US1] Add ARIA labels to all filter controls (season, status, date inputs) in FilterPanel
+
+**Integration**
+
+- [x] T046 [US1] Wire FilterPanel to usePlayerFilters hook
+- [ ] T047 [US1] Wire Apply button to trigger usePlayerResults fetch with applied filters
+- [ ] T048 [US1] Wire Clear button to reset usePlayerFilters state and refetch with defaults
+- [ ] T049 [US1] Update URL query parameters on Apply (shareable searches) in PlayerResearch page
+
+**Checkpoint**: User Story 1 complete - users can apply filters via horizontal panel with Apply/Clear buttons and view filtered players
 
 ---
 
 ## Phase 4: User Story 2 - Player Performance Scoring (Priority: P2)
 
-**Goal**: Display calculated scores for each player based on custom scoring configuration
+**Goal**: Enable users to see calculated scores with dynamic column display showing only statistics included in the active scoring configuration
 
-**Independent Test**: Select active scoring configuration, search for players, and verify each player displays a calculated score. Click on a player's score to see detailed scoring breakdown.
+**Independent Test**: Select active scoring configuration, search for players, verify PTS and PPG columns display. Verify only statistical columns included in scoring config are shown. Change scoring config, verify columns adjust dynamically.
 
-### Backend Implementation
+### Implementation for User Story 2
 
-- [X] T037 [US2] Create score calculation service in backend/src/modules/player-research/services/score-calculation.service.ts
-- [X] T038 [US2] Implement calculatePlayerScore() method using scoring configuration rules
-- [X] T039 [US2] Create ScoreBreakdownDto in backend/src/modules/player-research/dto/score-breakdown.dto.ts
-- [X] T040 [US2] Modify PlayersService.findAll() to include score calculations using user's active config
-- [X] T041 [US2] Implement GET /api/players/:id/score-breakdown endpoint in backend/src/modules/player-research/player-research.controller.ts
-- [X] T042 [P] [US2] Add scoringConfigId query parameter to search endpoint for config selection
-- [X] T043 [P] [US2] Handle null scoring configuration case (return raw stats without scores)
-- [X] T044 [P] [US2] Optimize score calculation query with database joins and indices
+**Backend - Score Calculation & Dynamic Columns**
 
-### Frontend Implementation
+- [ ] T050 [US2] Implement totalPoints calculation in backend/src/modules/player-research/player-research.service.ts
+- [ ] T051 [US2] Implement pointsPerGame calculation in backend/src/modules/player-research/player-research.service.ts
+- [ ] T052 [US2] Implement column configuration resolver (determine visible stats from scoring config) in backend/src/modules/player-research/services/column-configuration.service.ts
+- [ ] T053 [US2] Filter returned statistics object to only include scored stats in backend/src/modules/player-research/player-research.service.ts
+- [ ] T054 [US2] Add Redis caching for calculated scores with key scores:{userId}:{configId}:{playerId}:{dateRange} in backend/src/modules/player-research/player-research.service.ts
+- [ ] T055 [US2] Implement cache invalidation on scoring configuration change in backend/src/modules/player-research/player-research.service.ts
 
-- [X] T045 [P] [US2] Create ScoringConfigSelector component in frontend/src/components/player-research/ScoringConfigSelector.tsx
-- [X] T046 [P] [US2] Update PlayerCard to display calculated score prominently
-- [X] T047 [P] [US2] Create ScoreBreakdownModal component in frontend/src/components/player-research/ScoreBreakdownModal.tsx
-- [X] T048 [US2] Add onClick handler to scores to open ScoreBreakdownModal
-- [X] T049 [US2] Implement API service method for score breakdown in frontend/src/services/api.ts
-- [X] T050 [US2] Add score sorting functionality to PlayerList (sort by score desc/asc)
-- [X] T051 [P] [US2] Display "Select scoring configuration" message when no config active
-- [X] T052 [P] [US2] Implement real-time score recalculation when config changes
+**Frontend - Score Display & Dynamic Columns**
 
-### Testing
+- [ ] T056 [P] [US2] Add PTS (totalPoints) column to PlayerListing in frontend/src/components/player-research/PlayerListing.tsx
+- [ ] T057 [P] [US2] Add PPG (pointsPerGame) column to PlayerListing in frontend/src/components/player-research/PlayerListing.tsx
+- [ ] T058 [US2] CREATE dynamic column resolver function based on scoring config in frontend/src/components/player-research/PlayerListing.tsx
+- [ ] T059 [US2] Implement batter stat column definitions (GP, AB, H, 2B, 3B, HR, R, RBI, BB, K, SB, CS) in PlayerListing
+- [ ] T060 [US2] Implement pitcher stat column definitions (GP, GS, W, L, S, H, ER, BB, K) in PlayerListing
+- [ ] T061 [US2] Implement conditional column rendering (only show stats in scoring config) in PlayerListing
+- [ ] T062 [US2] Implement sticky columns for Player Name, Pos, Team using CSS position: sticky in PlayerListing
+- [ ] T063 [US2] Implement number formatting (whole numbers for counts, 3 decimals for averages) in PlayerListing
+- [ ] T064 [US2] Update sort functionality to include PTS and PPG columns in PlayerListing
+- [ ] T065 [US2] Set default sort to totalPoints descending in PlayerListing
 
-- [X] T053 [P] [US2] Write unit tests for score calculation logic in backend/src/modules/player-research/services/score-calculation.service.spec.ts
-- [ ] T054 [P] [US2] Write unit tests for score breakdown DTO transformation in backend/src/modules/player-research/dto/score-breakdown.dto.spec.ts
-- [ ] T055 [P] [US2] Write e2e tests for GET /api/players/:id/score-breakdown in backend/test/player-research.e2e-spec.ts
-- [ ] T056 [P] [US2] Write React component tests for ScoreBreakdownModal in frontend/src/components/player-research/ScoreBreakdownModal.test.tsx
-- [ ] T057 [P] [US2] Write integration test for score recalculation on config change in frontend/src/pages/PlayerResearch.test.tsx
+**Frontend - Score Breakdown**
 
-**US2 Complete**: Users can view calculated scores and detailed breakdowns based on their scoring configuration
+- [ ] T066 [P] [US2] Create ScoreBreakdown component (modal) in frontend/src/components/player-research/ScoreBreakdown.tsx
+- [ ] T067 [US2] Implement score breakdown display (stat × points = score) in ScoreBreakdown component
+- [ ] T068 [US2] Wire ScoreBreakdown to totalPoints column click in PlayerListing
+- [ ] T069 [US2] Fetch score breakdown from existing GET /api/players/{id}/score-breakdown endpoint
+
+**Scoring Configuration Integration**
+
+- [ ] T070 [US2] Add scoring configuration selector dropdown to page header in PlayerResearch page
+- [ ] T071 [US2] Implement scoring config change handler (refetch with new configId) in usePlayerResults hook
+- [ ] T072 [US2] Implement column update on scoring config change in PlayerListing
+- [ ] T073 [US2] Add loading skeleton during score recalculation in PlayerListing
+
+**Accessibility**
+
+- [ ] T074 [P] [US2] Add aria-sort attributes to sortable column headers in PlayerListing
+- [ ] T075 [P] [US2] Implement aria-live="polite" announcement for column changes in PlayerListing
+- [ ] T076 [P] [US2] Add keyboard navigation and focus management to ScoreBreakdown modal
+- [ ] T077 [P] [US2] Ensure ScoreBreakdown modal has proper ARIA roles and labels
+
+**Responsive Design**
+
+- [ ] T078 [US2] Implement responsive column breakpoints (desktop: all, tablet: top 6, mobile: base only) in PlayerListing
+
+**Checkpoint**: User Stories 1 AND 2 complete - users can view scored players with dynamic columns based on scoring configuration
 
 ---
 
 ## Phase 5: User Story 3 - Save Custom Search Criteria (Priority: P3)
 
-**Goal**: Allow users to save frequently-used filter combinations for quick reuse
+**Goal**: Enable users to save frequently-used filter combinations for quick access
 
-**Independent Test**: Apply filters, save search with name "Yankees Pitchers", navigate away, return to page, load saved search, and verify all filters are applied instantly.
+**Independent Test**: Apply filters, save search with name, navigate away, return, load saved search, verify filters auto-apply instantly.
 
-### Backend Implementation
+### Implementation for User Story 3
 
-- [ ] T058 [P] [US3] Create SavedSearch entity and DTO in backend/src/modules/player-research/entities/saved-search.entity.ts
-- [ ] T059 [P] [US3] Create CreateSavedSearchDto and UpdateSavedSearchDto in backend/src/modules/player-research/dto/
-- [ ] T060 [US3] Implement SavedSearchService with CRUD operations in backend/src/modules/player-research/services/saved-search.service.ts
-- [ ] T061 [US3] Implement POST /api/saved-searches endpoint in backend/src/modules/player-research/player-research.controller.ts
-- [ ] T062 [P] [US3] Implement GET /api/saved-searches endpoint (list user's saved searches)
-- [ ] T063 [P] [US3] Implement PUT /api/saved-searches/:id endpoint (update saved search)
-- [ ] T064 [P] [US3] Implement DELETE /api/saved-searches/:id endpoint (delete saved search)
-- [ ] T065 [P] [US3] Add validation for unique constraint on (userId, name)
-- [ ] T066 [P] [US3] Add validation to limit 50 saved searches per user
-- [ ] T067 [P] [US3] Create audit log entries for saved search CRUD operations
+**Backend - Saved Search API (FilterVersion 2 Schema)**
 
-### Frontend Implementation
+- [ ] T079 [US3] Update SavedSearch entity to support filterVersion 2 schema in backend/src/modules/player-research/entities/saved-search.entity.ts
+- [ ] T080 [US3] Update CreateSavedSearchDto with filterVersion 2 fields in backend/src/modules/player-research/dto/create-saved-search.dto.ts
+- [ ] T081 [US3] Update UpdateSavedSearchDto with filterVersion 2 fields in backend/src/modules/player-research/dto/update-saved-search.dto.ts
+- [ ] T082 [US3] Add filter schema validation for filterVersion 2 in backend/src/modules/player-research/player-research.service.ts
+- [ ] T083 [US3] Update POST /api/saved-searches to handle new filter structure in backend/src/modules/player-research/player-research.controller.ts
+- [ ] T084 [US3] Update PUT /api/saved-searches/{id} to handle new filter structure in backend/src/modules/player-research/player-research.controller.ts
 
-- [ ] T068 [P] [US3] Create SavedSearches component to display list in frontend/src/components/player-research/SavedSearches.tsx
-- [ ] T069 [P] [US3] Create SaveSearchModal component for saving new searches in frontend/src/components/player-research/SaveSearchModal.tsx
-- [ ] T070 [US3] Implement API service methods for saved search CRUD in frontend/src/services/api.ts
-- [ ] T071 [US3] Add "Save Search" button to FilterPanel that opens SaveSearchModal
-- [ ] T072 [US3] Implement saved search loading functionality (apply all filters from saved search)
-- [ ] T073 [P] [US3] Add edit and delete actions to SavedSearches list items
-- [ ] T074 [P] [US3] Add confirmation dialog for delete action
-- [ ] T075 [P] [US3] Display saved search count and "50 max" indicator
+**Frontend - Saved Search UI**
 
-### Testing
+- [ ] T085 [P] [US3] Update SavedSearches component for filterVersion 2 in frontend/src/components/player-research/SavedSearches.tsx
+- [ ] T086 [P] [US3] Update useSavedSearches hook to handle new filter structure in frontend/src/hooks/useSavedSearches.ts
+- [ ] T087 [US3] Update load saved search behavior to populate new filter controls (statisticType toggle, season, positions array) in useSavedSearches hook
+- [ ] T088 [US3] Update save search functionality to capture current filterVersion 2 state in useSavedSearches hook
+- [ ] T089 [US3] Ensure saved search auto-clicks Apply after loading filters in useSavedSearches hook
+- [ ] T090 [US3] Update saved search display to show filter details (statisticType, positions, season) in SavedSearches component
 
-- [ ] T076 [P] [US3] Write unit tests for SavedSearchService CRUD operations in backend/src/modules/player-research/services/saved-search.service.spec.ts
-- [ ] T077 [P] [US3] Write unit tests for CreateSavedSearchDto validation in backend/src/modules/player-research/dto/create-saved-search.dto.spec.ts
-- [ ] T078 [P] [US3] Write e2e tests for saved search endpoints in backend/test/player-research.e2e-spec.ts
-- [ ] T079 [P] [US3] Write React component tests for SaveSearchModal in frontend/src/components/player-research/SaveSearchModal.test.tsx
-- [ ] T080 [P] [US3] Write React component tests for SavedSearches in frontend/src/components/player-research/SavedSearches.test.tsx
+**Migration Support**
 
-**US3 Complete**: Users can save, load, edit, and delete custom search criteria
+- [ ] T091 [US3] Implement backward compatibility for filterVersion 1 saved searches in backend/src/modules/player-research/player-research.service.ts
+- [ ] T092 [US3] Add migration logic to convert v1 filters to v2 on load in useSavedSearches hook
+
+**Checkpoint**: All user stories complete - users can save, load, edit, and delete custom search criteria with new filter structure
 
 ---
 
-## Phase 6: Background Data Refresh
+## Phase 6: Polish & Cross-Cutting Concerns
 
-**Purpose**: Implement hourly player statistics refresh from MLB-StatsAPI
+**Purpose**: Improvements affecting multiple user stories
 
-- [ ] T081 Implement PlayerStatsRefreshService with @Cron decorator in backend/src/modules/players/jobs/player-stats-refresh.service.ts
-- [ ] T082 Create MLB API data mapping logic to transform API response to PlayerStatistic entity
-- [ ] T083 Implement batch upsert logic for PlayerStatistic records
-- [ ] T084 [P] Add error handling and retry logic with exponential backoff for failed API calls
-- [ ] T085 [P] Implement circuit breaker pattern for MLB API failures
-- [ ] T086 [P] Add logging for successful/failed refresh operations
-- [ ] T087 Test background job execution manually (trigger via API or scheduler)
-- [ ] T088 [P] Configure cron schedule for hourly refresh during season (9am-11pm daily)
-
----
-
-## Phase 7: Polish & Cross-Cutting Concerns
-
-**Purpose**: Final refinements, performance optimization, and accessibility
-
-- [ ] T089 [P] Add database query performance monitoring and logging
-- [ ] T090 [P] Optimize database queries with EXPLAIN ANALYZE
-- [ ] T091 [P] Add request/response time logging for player search endpoint
-- [ ] T092 [P] Implement frontend loading skeletons for better perceived performance
-- [ ] T093 [P] Add ARIA labels and keyboard navigation to FilterPanel
-- [ ] T094 [P] Add ARIA announcements for filter application and result counts
-- [ ] T095 [P] Test with screen reader for accessibility compliance
-- [ ] T096 [P] Add focus indicators for all interactive elements
-- [ ] T097 [P] Implement responsive design for mobile (collapsible filters, touch-friendly)
-- [ ] T098 [P] Add empty state messaging when no players match filters
-- [ ] T099 [P] Add "Last updated" timestamp display on player research page
-- [ ] T100 [P] Implement rate limiting for player search endpoint (50 requests/minute per user)
-- [ ] T101 [P] Add API documentation to Swagger for new endpoints
-- [ ] T102 [P] Update README with player research feature documentation
+- [ ] T093 [P] Verify all WCAG 2.1 AA color contrast ratios (4.5:1 text, 3:1 UI) across all components
+- [ ] T094 [P] Test with NVDA screen reader (Windows) per research.md guidelines
+- [ ] T095 [P] Test with VoiceOver screen reader (Mac) per research.md guidelines
+- [ ] T096 [P] Run axe-core automated accessibility tests on PlayerResearch page
+- [ ] T097 [P] Implement error boundary for player research feature in frontend/src/features/player-research/
+- [ ] T098 [P] Add comprehensive error messages for all API failures in PlayerResearch page
+- [ ] T099 [P] Implement graceful degradation when MLB API unavailable (show cached data with banner) in backend
+- [ ] T100 [P] Add performance monitoring for score calculation (target <2s) in backend
+- [ ] T101 [P] Verify database indices per data-model.md (Player: position, team, status; PlayerStatistic: playerId, season, dateRange, GIN on statistics JSONB)
+- [ ] T102 [P] Implement retry logic with exponential backoff for MLB-StatsAPI in backend/src/modules/mlb-stats/
+- [ ] T103 [P] Add circuit breaker pattern for external API calls in backend/src/modules/mlb-stats/
+- [ ] T104 [P] Implement comprehensive logging for debugging in player-research module
+- [ ] T105 [P] Add application-level last updated timestamp display in PlayerResearch page header
+- [ ] T106 Code review and refactoring across all updated components
+- [ ] T107 [P] Implement React.memo for PlayerListing row components for performance
+- [ ] T108 [P] Security review: Validate all filter inputs prevent injection attacks
+- [ ] T109 Run quickstart.md validation scenarios (Scenarios 1-3 with updated requirements)
 
 ---
 
-## Dependencies & Execution Strategy
+## Dependencies & Execution Order
+
+### Phase Dependencies
+
+- **Setup (Phase 1)**: No dependencies - can start immediately (6 tasks)
+- **Foundational (Phase 2)**: Depends on Setup - BLOCKS all user stories (9 tasks)
+- **User Stories (Phase 3-5)**: All depend on Foundational completion
+  - Can proceed in parallel if staffed
+  - Or sequentially in priority order (P1 → P2 → P3)
+- **Polish (Phase 6)**: Depends on desired user stories being complete (17 tasks)
 
 ### User Story Dependencies
 
-```
-Phase 1 (Setup) → Phase 2 (Foundation) → Phase 3 (US1) ✅ MVP
-                                        ↓
-                                        Phase 4 (US2)
-                                        ↓
-                                        Phase 5 (US3)
-                                        ↓
-                                        Phase 6 (Background Jobs)
-                                        ↓
-                                        Phase 7 (Polish)
-```
+- **User Story 1 (P1)**: Can start after Foundational - No dependencies on other stories (34 tasks)
+- **User Story 2 (P2)**: Can start after Foundational - Builds on US1 player listing but scoring is independent (29 tasks)
+- **User Story 3 (P3)**: Can start after Foundational - Operates on US1 filters but saves independently (14 tasks)
 
-**Independent Stories**: US1, US2, US3 can be implemented in any order after Phase 2 is complete. However, US2 builds naturally on US1 (adds scores to existing search), and US3 builds on US1 (saves existing filters).
+### Within Each User Story
 
-**Suggested Order**: US1 → US2 → US3 (as prioritized in spec.md)
+- Backend API updates before frontend API calls
+- DTOs before controllers
+- Hooks before components
+- Components before integration
+- Core functionality before accessibility
+- Core functionality before responsive design
 
-### Parallel Execution Examples
+### Parallel Opportunities
 
-**Phase 3 (US1) - After T019 complete**:
-- Run in parallel: T020, T021, T022, T023 (backend endpoints)
-- Run in parallel: T024, T025, T026, T027 (frontend components)
-- Run in parallel: T032, T033, T034, T035, T036 (all test tasks)
-
-**Phase 4 (US2) - After T038 complete**:
-- Run in parallel: T042, T043, T044 (backend optimizations)
-- Run in parallel: T045, T046, T047, T051 (frontend components)
-- Run in parallel: T053, T054, T055, T056, T057 (all test tasks)
-
-**Phase 5 (US3) - After T060 complete**:
-- Run in parallel: T061, T062, T063, T064 (backend CRUD endpoints)
-- Run in parallel: T068, T069, T073, T074, T075 (frontend components)
-- Run in parallel: T076, T077, T078, T079, T080 (all test tasks)
-
-**Phase 7 (Polish)**:
-- Run all tasks in parallel (T089-T102)
-
-### MVP Scope
-
-**Minimum Viable Product**: Phase 1 + Phase 2 + Phase 3 (US1 only)
-
-This delivers:
-- ✅ Player search and filtering by position, team, date range
-- ✅ Paginated results with player details
-- ✅ Full backend API and frontend UI
-- ✅ Complete test coverage for core functionality
-
-**Value Delivered**: Users can research players and narrow down results using standard filters. This is the foundational capability that US2 and US3 build upon.
-
-### Implementation Strategy
-
-1. **Complete Phase 1 & 2 first** (setup and foundation) - ~15 tasks
-2. **Implement US1 completely** (MVP) - ~21 tasks
-3. **Validate US1 works independently** before moving to US2
-4. **Implement US2 completely** (scoring) - ~21 tasks
-5. **Implement US3 completely** (saved searches) - ~23 tasks
-6. **Add background job** - ~8 tasks
-7. **Polish and optimize** - ~14 tasks
-
-**Total**: 102 tasks
-
-**Estimated Timeline**:
-- Phase 1 & 2: 2-3 days
-- US1 (MVP): 3-4 days
-- US2: 3-4 days
-- US3: 3-4 days
-- Phase 6 & 7: 2-3 days
-- **Total**: ~13-18 days for full feature
+- **Setup**: All 6 tasks can run in parallel
+- **Foundational**: T007-T015 can run in parallel after schema updates
+- **Within US1**: T016-T019 (backend), T020-T026 (filter panel), T038-T045 (accessibility) can run in parallel at appropriate stages
+- **Within US2**: T050-T055 (backend), T056-T065 (columns), T074-T077 (accessibility) can run in parallel
+- **Within US3**: T079-T084 (backend), T085-T090 (frontend) can run in parallel
+- **Polish**: Most tasks (T093-T108) can run in parallel
 
 ---
 
-## Task Summary
+## Implementation Strategy
 
-- **Total Tasks**: 102
-- **Setup & Foundation**: 15 tasks (Phases 1-2)
-- **User Story 1** (MVP): 21 tasks (Phase 3)
-- **User Story 2**: 21 tasks (Phase 4)
-- **User Story 3**: 23 tasks (Phase 5)
-- **Background Jobs**: 8 tasks (Phase 6)
-- **Polish**: 14 tasks (Phase 7)
+### MVP First (User Story 1 Only)
 
-**Parallel Opportunities**: ~60 tasks can run in parallel (marked with [P])
+1. Complete Phase 1: Setup (6 tasks)
+2. Complete Phase 2: Foundational (9 tasks) - CRITICAL
+3. Complete Phase 3: User Story 1 (34 tasks)
+4. **STOP and VALIDATE**:
+   - Test horizontal filter panel with Apply/Clear buttons
+   - Verify filters don't execute until Apply clicked
+   - Test keyboard navigation and screen reader
+   - Verify team abbreviations and name formatting
+5. Deploy/demo if ready
 
-**Independent Test Criteria**:
-- US1: Apply filters and view filtered players
-- US2: View scores and breakdowns with active config
-- US3: Save, load, and manage custom searches
+**Total MVP tasks**: 49 tasks
 
-**MVP Scope**: Phases 1-3 (36 tasks) delivers working player search with filtering
+### Incremental Delivery
+
+1. **Foundation** (Phase 1 + 2): 15 tasks → Schema and API updates ready
+2. **MVP** (+ User Story 1): 34 tasks → Horizontal filter panel working (49 total)
+3. **Scoring** (+ User Story 2): 29 tasks → Add dynamic columns and scores (78 total)
+4. **Saved Searches** (+ User Story 3): 14 tasks → Add save/load with v2 schema (92 total)
+5. **Polish** (Phase 6): 17 tasks → Production-ready (109 total)
+
+### Parallel Team Strategy
+
+With multiple developers:
+
+1. **Foundation Together** (Phase 1 + 2): Complete setup
+2. **After Foundational**:
+   - Developer A: User Story 1 (Filter Panel)
+   - Developer B: User Story 2 (Scoring) - can start after T015
+   - Developer C: User Story 3 (Saved Searches) - can start after T015
+3. Stories integrate independently
+4. **Team Together**: Polish phase
+
+---
+
+## Summary
+
+- **Total Tasks**: 109
+- **Setup Phase**: 6 tasks
+- **Foundational Phase**: 9 tasks (BLOCKS all stories)
+- **User Story 1** (MVP): 34 tasks (Horizontal Filter Panel with Apply/Clear)
+- **User Story 2**: 29 tasks (Dynamic Columns & Scoring)
+- **User Story 3**: 14 tasks (Saved Searches v2)
+- **Polish Phase**: 17 tasks
+- **Parallel Opportunities**: ~50 tasks marked [P]
+- **MVP Scope**: Phases 1-3 (49 tasks) delivers horizontal filter panel with explicit Apply/Clear button controls
+
+---
+
+## Notes
+
+- This tasks.md reflects the UPDATED specification with horizontal filter panel and dynamic columns
+- Previous implementation had vertical filter panel with auto-apply - this is being redesigned
+- Filter state management uses pending/applied pattern (not auto-apply)
+- Dynamic columns filter based on scoring configuration (not fixed columns)
+- SavedSearch schema updated to filterVersion 2 (statisticType, positions array, season)
+- Player names formatted as "Lastname, Firstname"
+- Team abbreviations are 3-letter codes (NYY, LAA, COL)
+- Tests not included per specification (no explicit test requirement)
+- Accessibility (WCAG 2.1 AA) is critical per constitution
+- [P] tasks can run in parallel (different files, no dependencies)
+- [Story] label maps to user stories (US1, US2, US3)

@@ -18,7 +18,7 @@ interface PlayerListProps {
   onPlayerClick?: (player: Player) => void;
   onScoreClick?: (player: Player) => void;
   onSortChange?: (field: string, direction: 'asc' | 'desc') => void;
-  statisticType: 'hitting' | 'pitching';
+  statisticType: 'batting' | 'pitching';
 }
 
 type SortField = 'name' | 'team' | 'position' | 'score';
@@ -124,7 +124,7 @@ const PlayerList: React.FC<PlayerListProps> = ({
   return (
     <div className="player-list-container">
       <div className="player-list-header">
-        <h3>Players ({statisticType === 'hitting' ? 'Hitting' : 'Pitching'} Stats)</h3>
+        <h3>Players ({statisticType === 'batting' ? 'Batting' : 'Pitching'} Stats)</h3>
         {pagination && (
           <span className="result-count">
             Showing {players.length} of {pagination.total} players

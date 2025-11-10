@@ -1,4 +1,5 @@
-.filter-panel {
+/* Filter Panel - Horizontal 3-line layout */
+.filter-panel-horizontal {
   background: #f8f9fa;
   border: 1px solid #dee2e6;
   border-radius: 8px;
@@ -6,132 +7,252 @@
   margin-bottom: 2rem;
 }
 
-.filter-panel h3 {
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  color: #212529;
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
-.filter-section {
-  margin-bottom: 1.5rem;
+/* Filter lines */
+.filter-line {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.filter-section label {
-  display: block;
+.filter-line-1 {
+  flex-wrap: wrap;
+}
+
+.filter-line-2 {
+  align-items: center;
+}
+
+.filter-line-3 {
+  justify-content: flex-end;
+  margin-bottom: 0;
+}
+
+/* Filter fields */
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 100px;
+}
+
+.filter-label {
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
   color: #495057;
+  margin-bottom: 0.25rem;
 }
 
-.checkbox-group {
+.filter-select,
+.filter-input {
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9375rem;
+  background-color: white;
+}
+
+/* Statistic Type Toggle */
+.statistic-type-toggle {
+  display: flex;
+  flex-direction: column;
+}
+
+.toggle-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle-btn {
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  min-width: 44px;
+  border: 2px solid #007bff;
+  border-radius: 4px;
+  background-color: white;
+  color: #007bff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  background-color: #e7f1ff;
+}
+
+.toggle-btn.active {
+  background-color: #007bff;
+  color: white;
+}
+
+/* T042: Focus indicators (2px outline, 4.5:1 contrast) */
+.toggle-btn:focus,
+.filter-select:focus,
+.filter-input:focus,
+.position-checkbox input[type="checkbox"]:focus,
+.btn-apply:focus,
+.btn-clear:focus {
+  outline: 2px solid #0056b3;
+  outline-offset: 2px;
+}
+
+/* Position checkboxes */
+.position-checkboxes {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-.checkbox-group.scrollable {
-  max-height: 200px;
-  overflow-y: auto;
-  flex-direction: column;
-}
-
-.checkbox-label {
+.position-checkbox {
   display: flex;
   align-items: center;
-  font-weight: 400;
+  gap: 0.25rem;
   cursor: pointer;
-  padding: 0.25rem;
-}
-
-.checkbox-label input[type="checkbox"] {
-  margin-right: 0.5rem;
-  cursor: pointer;
-}
-
-.toggle-group {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.toggle-button {
-  flex: 1;
-  padding: 0.5rem 1rem;
-  border: 2px solid #007bff;
+  padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  background-color: white;
-  color: #007bff;
+  transition: background-color 0.2s;
+}
+
+.position-checkbox:hover {
+  background-color: #e9ecef;
+}
+
+/* T044: Ensure 44x44px touch targets */
+.position-checkbox input[type="checkbox"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  cursor: pointer;
+}
+
+.position-checkbox {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.position-checkbox span {
+  font-size: 0.9375rem;
+  color: #212529;
+  user-select: none;
+}
+
+/* Filter actions */
+.filter-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.btn-apply,
+.btn-clear {
+  padding: 0.75rem 1.5rem;
+  min-height: 44px;
+  min-width: 44px;
+  border: none;
+  border-radius: 4px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.toggle-button:hover {
-  background-color: #e7f1ff;
-}
-
-.toggle-button.active {
+.btn-apply {
   background-color: #007bff;
   color: white;
 }
 
-.filter-section input[type="number"],
-.filter-section input[type="date"],
-.filter-section select {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-.filter-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.btn-primary,
-.btn-secondary {
-  flex: 1;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-}
-
-.btn-primary:hover {
+.btn-apply:hover:not([aria-disabled="true"]) {
   background-color: #0056b3;
 }
 
-.btn-secondary {
+.btn-apply[aria-disabled="true"] {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-clear {
   background-color: #6c757d;
   color: white;
 }
 
-.btn-secondary:hover {
+.btn-clear:hover:not([aria-disabled="true"]) {
   background-color: #545b62;
 }
 
+.btn-clear[aria-disabled="true"] {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* T041: Keyboard navigation support */
+.toggle-btn:focus-visible,
+.position-checkbox input[type="checkbox"]:focus-visible {
+  outline: 2px solid #0056b3;
+  outline-offset: 2px;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .filter-line-1 {
+    flex-wrap: wrap;
+  }
+
+  .filter-field {
+    min-width: 120px;
+  }
+}
+
 @media (max-width: 768px) {
-  .filter-panel {
+  .filter-panel-horizontal {
     padding: 1rem;
   }
 
-  .checkbox-group {
+  .filter-line {
     flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filter-line-3 {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .filter-field {
+    min-width: auto;
   }
 
   .filter-actions {
+    width: 100%;
+  }
+
+  .btn-apply,
+  .btn-clear {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-actions {
     flex-direction: column;
+  }
+
+  .btn-apply,
+  .btn-clear {
+    width: 100%;
   }
 }

@@ -1,117 +1,88 @@
 # Implementation Plan: Player Research
 
-**Branch**: `feature/player-research` | **Date**: 2025-10-29 | **Spec**: [spec.md](./spec.md)
+**Branch**: `002-player-research` | **Date**: 2025-11-09 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/002-player-research/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-This feature implements player research capabilities allowing users to search, filter, and analyze baseball players with calculated scores based on custom scoring configurations. The system will fetch player statistics from MLB-StatsAPI, cache them for performance, calculate scores using existing scoring configuration logic, and allow users to save frequently-used search criteria. The implementation extends the existing NestJS/PostgreSQL/React stack with new modules for player data management, statistical calculations, and saved search persistence.
+Player research functionality enables users to search and filter baseball players using customizable criteria (statistic type, position, season, status, date range), view calculated scores based on custom scoring configurations, and save frequently-used filter combinations for quick access. The interface features a horizontal filter panel positioned above the player listing with explicit Apply/Clear button controls, and dynamically displays statistical columns based on the active scoring configuration and player position type (batter/pitcher).
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.0+ / Node.js 20 LTS (backend), TypeScript/React 18 (frontend)
-**Primary Dependencies**: NestJS 11, Prisma ORM 6, PostgreSQL 15+, MLB-StatsAPI HTTP client
-**Storage**: PostgreSQL 15+ with JSONB (player statistics cache, saved searches)
-**Testing**: Jest (unit), Supertest (e2e) for backend; Jest/React Testing Library for frontend
-**Target Platform**: Web application (modern browsers), Node.js 20 LTS server
-**Project Type**: Web (frontend + backend)
+**Language/Version**: TypeScript 5.0+ / Node.js 20 LTS
+**Primary Dependencies**: NestJS 11 (backend), React 18 (frontend), Prisma ORM 6, MLB-StatsAPI
+**Storage**: PostgreSQL 15+ with JSONB for flexible scoring configurations
+**Testing**: Jest (unit, integration, contract tests)
+**Target Platform**: Web browsers (desktop and mobile), mobile-first responsive design
+**Project Type**: Web application (backend API + frontend client)
 **Performance Goals**:
-- Player search results < 5 seconds
-- Score recalculation < 2 seconds
-- Hourly statistics refresh from MLB-StatsAPI
-- Support 50+ concurrent user searches
+- Filter application: <5 seconds
+- Score recalculation: <2 seconds
+- Saved search loading: <3 seconds
+- Results display: Support 25+ players simultaneously
+- Data freshness: Hourly refresh during active game days
+
 **Constraints**:
-- < 200ms p95 for search/filter operations (excluding external API calls)
-- MLB-StatsAPI rate limits (if any)
-- 50 players per page (pagination required)
-- Score calculations must align with existing ScoringConfiguration rules
+- Must integrate with existing MLB-StatsAPI for player data
+- Must work with existing scoring configuration system (feature 001)
+- Must support WCAG accessibility standards
+- Must function on mobile devices with horizontal filter layout
+
 **Scale/Scope**:
-- ~1200 active MLB players per season
-- Support filtering/scoring across multiple seasons
-- Saved searches: up to 50 per user
+- Multi-user system with user-specific saved searches
+- Support all active MLB players (~1000+ players)
+- Multiple scoring configurations per user
+- Pagination for large result sets (>50 players)
+- Historical season data access
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-### User Experience & Interface
+### Guiding Questions Evaluation
 
-**Q: Is this design accessible to all users, including those with disabilities?**
-✅ YES - Player research page will include:
-- Semantic HTML with proper ARIA labels for filters and search controls
-- Keyboard navigation for all filter controls and result lists
-- Screen reader announcements for filter application and result counts
-- Sufficient color contrast for player scores and statistics
-- Focus indicators for interactive elements
-- Table structures with proper headers for accessibility
+**1. Does this feature respect user privacy and data security?**
+✅ **YES** - Saved searches are user-specific and require authentication. No sharing of personal search criteria. Filter selections processed server-side with proper input validation to prevent injection attacks.
 
-**Q: Will this implementation perform well on both web and mobile clients?**
-✅ YES - Design considerations:
-- Pagination limits result sets to 50 players for mobile performance
-- Responsive filter UI (collapsible on mobile)
-- Lazy loading for player statistics details
-- Optimized queries with database indices
-- Score calculations happen server-side (not client-side)
-- Mobile-first responsive layout (filters collapse, touch-friendly controls)
+**2. Is this design accessible to all users, including those with disabilities?**
+⚠️ **NEEDS VERIFICATION** - The horizontal filter panel layout and data table must meet WCAG 2.1 AA standards. Specific considerations:
+- Keyboard navigation for all filter controls
+- Screen reader compatibility for toggle controls and checkboxes
+- Proper ARIA labels for dynamically changing columns
+- Sufficient color contrast for Apply/Clear button states (enabled/disabled)
+- Focus indicators for all interactive elements
+**Action**: Document accessibility requirements in research.md and verify in implementation
 
-**Q: How does this feature contribute to a simple and intuitive user experience?**
-✅ YES - Simplicity focus:
-- Clear filter categories (position, team, date range) with standard controls
-- Real-time result updates as filters are applied
-- Persistent filter state during session
-- Saved searches provide quick access to common queries
-- Score breakdown modal explains how scores are calculated
-- Clear empty states and zero-result messaging
+**3. Will this implementation perform well on both web and mobile clients?**
+✅ **YES** - Mobile-first design approach with horizontal filter layout optimized for smaller screens. Performance targets (<5s filter, <2s scoring) ensure responsive experience. Pagination prevents excessive data rendering. Same API serves both platforms ensuring consistency.
 
-### Functional Requirements
+**4. How does this feature contribute to a simple and intuitive user experience?**
+✅ **YES** - Explicit Apply/Clear buttons with smart enabling logic prevent confusion about filter state. Dynamic column display reduces visual clutter by showing only relevant statistics. Team abbreviations (3-letter codes) improve scannability. Saved searches reduce repetitive data entry for power users.
 
-**Q: Does this feature respect user privacy and data security?**
-✅ YES - Privacy measures:
-- Saved searches are user-scoped (no sharing in MVP)
-- Player data is public MLB statistics (no privacy concerns)
-- Authentication required to access feature
-- Audit logging for saved search CRUD operations
-- User data deletion includes saved searches
+**5. Can this feature scale with a growing user base?**
+✅ **YES** - Database indexing on common filter fields (position, team, season). Pagination limits result sets. Hourly batch updates reduce real-time data fetching load. Scoring calculations can be cached or pre-computed. PostgreSQL supports horizontal scaling if needed.
 
-### Technical Implementation
+### Gates Summary
 
-**Q: Can this feature scale with a growing user base?**
-✅ YES - Scalability approach:
-- Player data cached in PostgreSQL (not fetched per request)
-- Hourly background job refreshes statistics (not on-demand)
-- Database indices on filter columns (position, team, date)
-- Pagination prevents large result set memory issues
-- Score calculations use indexed scoring configuration data
-- Stateless API design allows horizontal scaling
+**Pre-Research Gate Status**: ⚠️ **CONDITIONAL PASS**
+- **Blocker**: None
+- **Required Action**: Accessibility research must confirm WCAG compliance approach for filter panel and dynamic tables before Phase 1 design
 
-### Post-Design Re-Check
-
-All constitution checks remain valid after design phase:
-
-✅ **Accessibility**: Data models and API contracts support accessibility requirements
-- API responses include all necessary data for screen readers
-- No client-side-only features that would exclude assistive technologies
-- Pagination prevents performance issues on mobile/assistive devices
-
-✅ **Performance**: Design supports performance goals
-- Database indices on all filter columns
-- JSONB for flexible statistics without performance penalty
-- Server-side score calculations prevent client payload bloat
-- Pagination limits result sets
-
-✅ **Privacy & Security**: Design maintains security standards
-- SavedSearch user-scoped with foreign key constraints
-- JWT authentication required for all endpoints
-- Audit logging via existing AuditLog table
-- No sensitive data in player statistics (all public MLB data)
-
-✅ **Scalability**: Architecture supports growth
-- Stateless API design (horizontal scaling)
-- Background job for data refresh (not on-demand)
-- Caching strategy reduces external API dependency
-- Database design supports millions of statistics records
-
-**No constitution violations. Design approved for implementation.**
+**Post-Design Gate Status**: ✅ **PASS**
+- **Accessibility Verification**: Research confirmed WCAG 2.1 AA compliance approach using React ARIA patterns and semantic HTML (see research.md section 2)
+- **Design Artifacts Complete**:
+  - ✅ data-model.md: Filter panel state, saved search v2 schema, column configuration
+  - ✅ contracts/player-research-api.yaml: Updated with new filter parameters (statisticType, positions array, season) and response schema (totalPoints, pointsPerGame, teamAbbr)
+  - ✅ quickstart.md: Integration scenarios showing filter panel behavior, Apply/Clear button logic, and dynamic columns
+  - ✅ research.md: Accessibility compliance, filter state management, dynamic column display patterns
+- **Constitution Compliance**:
+  - ✅ Privacy/Security: User-scoped saved searches, server-side input validation
+  - ✅ Accessibility: WCAG 2.1 AA compliance approach documented and verified
+  - ✅ Performance: Mobile-first design, pagination, caching strategy
+  - ✅ User Experience: Explicit Apply/Clear button logic, dynamic columns reduce clutter
+  - ✅ Scalability: Database indexing, pagination, batch processing for score calculation
 
 ## Project Structure
 
@@ -119,13 +90,14 @@ All constitution checks remain valid after design phase:
 
 ```text
 specs/002-player-research/
+├── spec.md              # Feature specification with updated filter/column requirements
 ├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
+├── research.md          # Phase 0 output - accessibility, filtering patterns, MLB-StatsAPI
+├── data-model.md        # Phase 1 output - filter state, player results, saved searches
+├── quickstart.md        # Phase 1 output - integration scenarios
+├── contracts/           # Phase 1 output - REST API contracts (OpenAPI)
 │   └── player-research-api.yaml
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+└── tasks.md             # Phase 2 output (/speckit.tasks command)
 ```
 
 ### Source Code (repository root)
@@ -133,97 +105,131 @@ specs/002-player-research/
 ```text
 backend/
 ├── src/
-│   ├── modules/
-│   │   ├── auth/              # Existing (authentication)
-│   │   ├── users/             # Existing (user management)
-│   │   ├── scoring-configs/   # Existing (scoring configurations)
-│   │   ├── players/           # NEW (player data, statistics)
-│   │   ├── player-research/   # NEW (search, filters, saved searches)
-│   │   └── mlb-stats/         # NEW (MLB-StatsAPI client)
-│   ├── common/                # Existing (shared utilities, guards)
-│   ├── prisma/                # Existing (Prisma client, schema)
-│   └── main.ts
-├── prisma/
-│   └── schema.prisma          # Updated (new models for players, saved searches)
-└── test/                      # Existing (test infrastructure)
+│   ├── player-research/
+│   │   ├── player-research.module.ts
+│   │   ├── player-research.controller.ts
+│   │   ├── player-research.service.ts
+│   │   ├── dto/
+│   │   │   ├── filter-criteria.dto.ts
+│   │   │   ├── player-result.dto.ts
+│   │   │   └── saved-search.dto.ts
+│   │   └── entities/
+│   │       └── saved-search.entity.ts
+│   ├── scoring/                    # Existing from feature 001
+│   ├── players/
+│   │   ├── players.module.ts
+│   │   ├── players.service.ts
+│   │   └── entities/
+│   │       └── player.entity.ts
+│   └── mlb-stats/
+│       ├── mlb-stats.module.ts
+│       └── mlb-stats.service.ts    # MLB-StatsAPI integration
+└── tests/
+    ├── unit/
+    │   └── player-research/
+    ├── integration/
+    │   └── player-research/
+    └── contract/
+        └── player-research-api.spec.ts
 
 frontend/
 ├── src/
-│   ├── components/
-│   │   ├── auth/              # Existing (login, signup)
-│   │   ├── scoring-configs/   # Existing (scoring configuration UI)
-│   │   └── player-research/   # NEW (search, filters, results, saved searches)
-│   ├── pages/
-│   │   ├── PlayerResearch.tsx # NEW (main player research page)
-│   │   └── ...                # Existing pages
-│   ├── services/
-│   │   └── api.ts             # Updated (player research API calls)
-│   └── types/                 # Updated (player, search types)
+│   ├── features/
+│   │   └── player-research/
+│   │       ├── components/
+│   │       │   ├── FilterPanel.tsx
+│   │       │   ├── PlayerListing.tsx
+│   │       │   ├── SavedSearches.tsx
+│   │       │   └── ScoreBreakdown.tsx
+│   │       ├── hooks/
+│   │       │   ├── usePlayerFilters.ts
+│   │       │   ├── usePlayerResults.ts
+│   │       │   └── useSavedSearches.ts
+│   │       ├── services/
+│   │       │   └── player-research.service.ts
+│   │       └── types/
+│   │           ├── filter-state.ts
+│   │           └── player-result.ts
+│   ├── components/              # Shared UI components
+│   └── services/                # Shared API client
+└── tests/
+    ├── unit/
+    │   └── player-research/
+    └── integration/
+        └── player-research/
 ```
 
-**Structure Decision**: Web application structure (Option 2) with separate frontend and backend. This aligns with the existing codebase structure. New modules added to backend for player data management and research functionality. Frontend adds new component directory and page for player research UI.
+**Structure Decision**: Web application structure selected based on existing backend (NestJS) and frontend (React) from feature 001. Player research is implemented as a new module in both layers consuming the shared API. Frontend uses feature-based organization for component isolation. Backend uses NestJS module pattern for dependency injection and testing.
 
 ## Complexity Tracking
 
-*No constitution violations identified. All checks passed.*
+> **Fill ONLY if Constitution Check has violations that must be justified**
 
-## Phase 0: Research Requirements
+No violations identified. Accessibility verification (Question 2) is a standard requirement, not a violation. Research phase will document compliance approach.
 
-The following items require research and will be documented in `research.md`:
+## Phase 0: Research (Next Step)
 
-1. **MLB-StatsAPI Integration**
-   - Research MLB-StatsAPI endpoints for player data and statistics
-   - Determine authentication/rate limiting requirements
-   - Identify optimal data refresh strategy (hourly batch vs. on-demand)
-   - Document response formats and data mapping
+Research tasks to be addressed in `research.md`:
 
-2. **Player Statistics Caching Strategy**
-   - Research optimal caching approach for player statistics
-   - Determine cache invalidation strategy (time-based, event-based)
-   - Evaluate JSONB vs. relational model for statistics storage
-   - Document query patterns for filter performance
+1. **Accessibility Compliance**: Research WCAG 2.1 AA requirements for:
+   - Horizontal filter panels with toggle controls
+   - Dynamic data tables with changing column headers
+   - Enabled/disabled button states with visual and semantic indicators
+   - Keyboard navigation patterns for complex filter forms
 
-3. **Score Calculation Performance**
-   - Research best practices for real-time score calculations across large player sets
-   - Evaluate server-side vs. client-side calculation trade-offs
-   - Determine if pre-calculated scores should be cached
-   - Document calculation complexity and optimization opportunities
+2. **MLB-StatsAPI Integration**: Document API endpoints for:
+   - Player roster data (position, team, status)
+   - Historical and current season statistics
+   - Rate limiting and caching strategies
+   - Data freshness guarantees
 
-4. **Saved Search Data Model**
-   - Research filter serialization formats (JSON, query string)
-   - Determine if scoring configuration should be embedded or referenced
-   - Evaluate versioning needs for saved searches if filters evolve
-   - Document best practices for user-scoped search persistence
+3. **Filter State Management**: Research patterns for:
+   - Tracking pending vs. applied filter state (React best practices)
+   - Determining button enabled/disabled logic
+   - URL state synchronization for shareable searches
+   - Form validation for date ranges and combinations
 
-## Phase 1: Design Artifacts
+4. **Dynamic Column Display**: Research approaches for:
+   - Conditionally rendering table columns based on scoring configuration
+   - Maintaining sort state when columns change
+   - Responsive table design for mobile with 12+ columns
+   - Virtual scrolling or pagination for large datasets
 
-The following artifacts will be generated in Phase 1:
+5. **Score Calculation Performance**: Research strategies for:
+   - Client-side vs. server-side score calculation
+   - Caching calculated scores
+   - Incremental updates when configuration changes
+   - Batch processing for large result sets
 
-1. **data-model.md** - Data models for:
-   - Player (MLB player entity with metadata)
-   - PlayerStatistic (time-series statistics)
-   - SavedSearch (filter combinations with user association)
-   - Relationships to existing User and ScoringConfiguration models
+## Phase 1: Design (After Research)
 
-2. **contracts/player-research-api.yaml** - OpenAPI specification for:
-   - GET /api/players - Search and filter players
-   - GET /api/players/:id - Get player details
-   - GET /api/players/:id/score-breakdown - Get scoring breakdown
-   - POST /api/saved-searches - Create saved search
-   - GET /api/saved-searches - List user's saved searches
-   - PUT /api/saved-searches/:id - Update saved search
-   - DELETE /api/saved-searches/:id - Delete saved search
+Design artifacts to be generated:
 
-3. **quickstart.md** - Integration scenarios:
-   - Scenario 1: User applies filters and views scored players
-   - Scenario 2: User saves and reuses a search
-   - Scenario 3: User changes scoring configuration and sees scores update
-   - Scenario 4: Background job refreshes player statistics
+1. **data-model.md**: Entity definitions for:
+   - SavedSearch (user ID, name, filter criteria JSON, scoring config ID)
+   - FilterPanelState (pending filters, applied filters, button states)
+   - PlayerResult (player data, statistics, calculated scores, metadata)
+   - ColumnConfiguration (visible columns based on position and scoring config)
 
-## Notes
+2. **contracts/player-research-api.yaml**: REST API endpoints for:
+   - `GET /api/players/search` - Filter and retrieve players
+   - `POST /api/players/score` - Calculate scores for filtered players
+   - `GET /api/saved-searches` - List user's saved searches
+   - `POST /api/saved-searches` - Create new saved search
+   - `PUT /api/saved-searches/{id}` - Update saved search
+   - `DELETE /api/saved-searches/{id}` - Delete saved search
+   - `GET /api/players/filters/options` - Available filter options (teams, positions, seasons)
 
-- This feature builds on existing authentication (feature 001) and scoring configurations (feature 002)
-- MLB-StatsAPI is a free/open-source API as specified in the original platform specification
-- Frontend implementation will follow existing patterns from scoring configurations UI
-- Database schema additions will extend existing Prisma schema
-- All new code will follow existing test coverage standards (unit + e2e tests)
+3. **quickstart.md**: Integration scenarios including:
+   - New user applying filters and viewing results
+   - Existing user loading a saved search
+   - User changing scoring configuration and seeing scores update
+   - Mobile user interacting with horizontal filter panel
+
+## Next Steps
+
+1. Complete Phase 0 research (generate research.md)
+2. Re-evaluate Constitution Check based on research findings
+3. Complete Phase 1 design (generate data-model.md, contracts/, quickstart.md)
+4. Update agent context with any new technologies discovered during research
+5. Proceed to `/speckit.tasks` for task generation

@@ -31,33 +31,11 @@
 }
 
 .page-content {
-  display: grid;
-  grid-template-columns: 300px 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
 }
 
-.filters-sidebar {
-  position: sticky;
-  top: 2rem;
-  height: fit-content;
-  max-height: calc(100vh - 4rem);
-  overflow-y: auto;
-}
-
-.players-main {
-  min-width: 0; /* Prevents grid blowout */
-}
-
-@media (max-width: 1024px) {
-  .page-content {
-    grid-template-columns: 1fr;
-  }
-
-  .filters-sidebar {
-    position: static;
-    max-height: none;
-  }
-}
 
 @media (max-width: 768px) {
   .player-research-page {

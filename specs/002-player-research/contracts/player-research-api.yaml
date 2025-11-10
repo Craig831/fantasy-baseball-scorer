@@ -27,19 +27,29 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: position
+        - name: statisticType
           in: query
-          description: Filter by player position
+          description: Filter by statistic type (batting or pitching)
           required: false
           schema:
             type: string
-            enum: [Pitcher, Catcher, First Base, Second Base, Third Base, Shortstop, Outfield, Designated Hitter]
-        - name: team
+            enum: [batting, pitching]
+            default: batting
+        - name: positions
           in: query
-          description: Filter by MLB team name
+          description: Filter by player positions (comma-separated list, empty = all positions)
           required: false
           schema:
             type: string
+            example: "First Base,Third Base,Outfield"
+        - name: season
+          in: query
+          description: Filter by MLB season year
+          required: false
+          schema:
+            type: integer
+            minimum: 1876
+            example: 2024
         - name: status
           in: query
           description: Filter by player status
@@ -50,14 +60,14 @@ paths:
             default: active
         - name: dateFrom
           in: query
-          description: Start date for statistics period (ISO 8601)
+          description: Start date for statistics period (ISO 8601, null = season start)
           required: false
           schema:
             type: string
             format: date
         - name: dateTo
           in: query
-          description: End date for statistics period (ISO 8601)
+          description: End date for statistics period (ISO 8601, null = current date)
           required: false
           schema:
             type: string
@@ -68,8 +78,8 @@ paths:
           required: false
           schema:
             type: string
-            enum: [score, name, position, team, homeRuns, rbi, avg, era, strikeouts]
-            default: score
+            enum: [totalPoints, pointsPerGame, name, position, team, gp, ab, h, hr, rbi, r, bb, k, sb, w, l, s, er]
+            default: totalPoints
         - name: sortOrder
           in: query
           description: Sort direction
@@ -370,22 +380,37 @@ components:
           type: integer
         name:
           type: string
+          description: Player name in "Lastname, Firstname" format
+          example: "Trout, Mike"
         position:
           type: string
-        team:
+        teamAbbr:
           type: string
+          description: Three-letter team abbreviation
+          example: "LAA"
         status:
           type: string
           enum: [active, inactive, retired]
-        score:
+        totalPoints:
           type: number
           format: float
           nullable: true
-          description: Calculated score based on scoring configuration (null if no config)
+          description: Total calculated points based on scoring configuration (null if no config)
+        pointsPerGame:
+          type: number
+          format: float
+          nullable: true
+          description: Points per game average (null if no config or 0 games)
         statistics:
           type: object
-          description: Abbreviated statistics for the specified period
+          description: Position-specific statistics for the specified period (only stats in scoring config shown)
           additionalProperties: true
+          example:
+            gp: 157
+            ab: 599
+            h: 185
+            hr: 54
+            rbi: 130
         lastUpdated:
           type: string
           format: date-time
@@ -510,22 +535,44 @@ components:
         filters:
           type: object
           properties:
-            position:
+            filterVersion:
+              type: integer
+              example: 2
+              description: Filter schema version
+            statisticType:
               type: string
-            team:
-              type: string
+              enum: [batting, pitching]
+              example: "batting"
+            positions:
+              type: array
+              items:
+                type: string
+              example: ["First Base", "Third Base"]
+              description: Array of positions (empty = all positions)
+            season:
+              type: integer
+              minimum: 1876
+              example: 2024
             status:
               type: string
-            dateFrom:
-              type: string
-              format: date
-            dateTo:
-              type: string
-              format: date
+              enum: [active, inactive, retired]
+            dateRange:
+              type: object
+              properties:
+                from:
+                  type: string
+                  format: date
+                  nullable: true
+                to:
+                  type: string
+                  format: date
+                  nullable: true
             sortBy:
               type: string
+              enum: [totalPoints, pointsPerGame, name, position, team]
             sortOrder:
               type: string
+              enum: [asc, desc]
           additionalProperties: false
         scoringConfigurationId:
           type: string

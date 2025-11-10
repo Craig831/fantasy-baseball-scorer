@@ -6,7 +6,7 @@ interface PlayerCardProps {
   player: Player;
   onClick?: () => void;
   onScoreClick?: () => void;
-  statisticType: 'hitting' | 'pitching';
+  statisticType: 'batting' | 'pitching';
 }
 
 const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick, onScoreClick, statisticType }) => {
@@ -23,16 +23,26 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick, onScoreClick, 
     onScoreClick?.();
   };
 
+  // Format name as "Lastname, Firstname"
+  const formatPlayerName = (name: string): string => {
+    const parts = name.trim().split(' ');
+    if (parts.length < 2) return name;
+
+    const firstName = parts.slice(0, -1).join(' ');
+    const lastName = parts[parts.length - 1];
+    return `${lastName}, ${firstName}`;
+  };
+
   return (
     <tr className="player-row" onClick={handleRowClick}>
       <td className="name-cell">
         <div className="player-name">
-          {player.name}
+          {formatPlayerName(player.name)}
           {player.jerseyNumber && <span className="jersey-number">#{player.jerseyNumber}</span>}
         </div>
       </td>
       <td className="team-cell">
-        {player.team?.name || 'Unknown'}
+        {player.team?.abbreviation || player.team?.name || 'Unknown'}
       </td>
       <td className="position-cell">{player.position}</td>
       <td className="status-cell">
