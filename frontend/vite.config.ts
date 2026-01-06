@@ -1,9 +1,31 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+
+  // Configure build output to 'build/' to match CRA and minimize Docker changes
+  build: {
+    outDir: 'build',
+    emptyOutDir: true,
+    sourcemap: true,
+  },
+
+  // Path resolution (preserve existing alias)
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+
+  // Development server
+  server: {
+    port: 3001,
+    open: true,
+  },
+
+  // Preserve existing Vitest configuration
   test: {
     globals: true,
     environment: 'jsdom',
@@ -25,11 +47,6 @@ export default defineConfig({
         'src/index.tsx',
         '**/*.d.ts',
       ],
-    },
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
     },
   },
 });
