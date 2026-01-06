@@ -16,7 +16,19 @@ vi.mock('react-router-dom', async () => {
 });
 
 // Mock API
-vi.mock('../services/api');
+vi.mock('../../services/api', () => ({
+  default: {
+    post: vi.fn(),
+    get: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+    defaults: {
+      baseURL: 'http://localhost:3000/api',
+    },
+  },
+}));
 const mockApi = api as any;
 
 describe('LoginPage', () => {
