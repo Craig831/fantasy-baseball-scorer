@@ -46,8 +46,8 @@ export class PlayersService {
     const where: Prisma.PlayerWhereInput = {};
 
     // Filter by statistic type and position
-    if (statisticType === StatisticType.BATTING) {
-      // For batting, exclude pitchers unless specifically selected
+    if (statisticType === StatisticType.HITTING) {
+      // For hitting, exclude pitchers unless specifically selected
       if (positions && positions.length > 0) {
         where.position = { in: positions };
       } else {

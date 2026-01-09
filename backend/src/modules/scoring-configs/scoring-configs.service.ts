@@ -13,33 +13,36 @@ export class ScoringConfigsService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, createDto: CreateScoringConfigDto) {
-    // If isActive is true, deactivate all other configs for this user
-    if (createDto.isActive) {
-      await this.prisma.scoringConfiguration.updateMany({
-        where: { userId, isActive: true },
-        data: { isActive: false },
+    // Wrap in transaction to prevent race conditions when creating multiple active configs simultaneously
+    return this.prisma.$transaction(async (tx) => {
+      // If isActive is true, deactivate all other configs for this user
+      if (createDto.isActive) {
+        await tx.scoringConfiguration.updateMany({
+          where: { userId, isActive: true },
+          data: { isActive: false },
+        });
+      }
+
+      const config = await tx.scoringConfiguration.create({
+        data: {
+          userId,
+          name: createDto.name,
+          categories: createDto.categories,
+          isActive: createDto.isActive || false,
+        },
+        select: {
+          id: true,
+          userId: true,
+          name: true,
+          categories: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       });
-    }
 
-    const config = await this.prisma.scoringConfiguration.create({
-      data: {
-        userId,
-        name: createDto.name,
-        categories: createDto.categories,
-        isActive: createDto.isActive || false,
-      },
-      select: {
-        id: true,
-        userId: true,
-        name: true,
-        categories: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    return this.formatResponse(config);
+      return config;
+    }).then(config => this.formatResponse(config));
   }
 
   async findAll(userId: string, page: number = 1, limit: number = 20) {

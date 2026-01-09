@@ -20,7 +20,7 @@ export enum PlayerStatus {
 }
 
 export enum StatisticType {
-  BATTING = 'batting',
+  HITTING = 'hitting',
   PITCHING = 'pitching',
 }
 
@@ -30,8 +30,8 @@ export enum StatisticType {
  */
 export class SearchPlayersDto {
   @ApiPropertyOptional({
-    description: 'Statistic type to filter players by (batting or pitching)',
-    example: 'batting',
+    description: 'Statistic type to filter players by (hitting or pitching)',
+    example: 'hitting',
     enum: StatisticType,
   })
   @IsOptional()

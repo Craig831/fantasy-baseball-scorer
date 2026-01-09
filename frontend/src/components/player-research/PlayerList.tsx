@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Player } from '../../types/player';
-import PlayerCard from './PlayerCard';
+import {
+  PlayerResult,
+  ColumnConfig,
+  ScoringConfig,
+  getVisibleColumns
+} from '../../features/player-research/types/player-result';
 import './PlayerList.css';
 
 interface PlayerListProps {
-  players: Player[];
+  players: Player[] | PlayerResult[];
   loading: boolean;
   error: string | null;
   pagination: {
@@ -15,10 +20,11 @@ interface PlayerListProps {
     hasMore: boolean;
   } | null;
   onPageChange: (page: number) => void;
-  onPlayerClick?: (player: Player) => void;
-  onScoreClick?: (player: Player) => void;
+  onPlayerClick?: (player: Player | PlayerResult) => void;
+  onScoreClick?: (player: Player | PlayerResult) => void;
   onSortChange?: (field: string, direction: 'asc' | 'desc') => void;
-  statisticType: 'batting' | 'pitching';
+  statisticType: 'hitting' | 'pitching';
+  scoringConfig?: ScoringConfig | null;
 }
 
 type SortField = 'name' | 'team' | 'position' | 'score';
@@ -34,11 +40,17 @@ const PlayerList: React.FC<PlayerListProps> = ({
   onScoreClick,
   onSortChange,
   statisticType,
+  scoringConfig,
 }) => {
-  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortField, setSortField] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  const handleSort = (field: SortField) => {
+  // Calculate visible columns based on statistic type and scoring config
+  const visibleColumns = useMemo(() => {
+    return getVisibleColumns(statisticType, scoringConfig);
+  }, [statisticType, scoringConfig]);
+
+  const handleSort = (field: string) => {
     let newDirection: SortDirection;
 
     if (sortField === field) {
@@ -56,27 +68,104 @@ const PlayerList: React.FC<PlayerListProps> = ({
     }
   };
 
+  // Helper function to render cell content based on column configuration
+  const renderCell = (player: Player | PlayerResult, col: ColumnConfig) => {
+    const isPlayerResult = 'totalPoints' in player;
+
+    if (col.key === 'playerName') {
+      return player.name;
+    }
+
+    if (col.key === 'position') {
+      return player.position;
+    }
+
+    if (col.key === 'teamAbbr') {
+      if (isPlayerResult) {
+        return (player as PlayerResult).teamAbbr;
+      }
+      return (player as Player).team?.abbreviation || (player as Player).team?.name || '--';
+    }
+
+    if (col.key === 'totalPoints') {
+      if (isPlayerResult) {
+        const totalPoints = (player as PlayerResult).totalPoints;
+        return totalPoints !== null ? (
+          <button
+            className="score-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onScoreClick?.(player);
+            }}
+            title="Click for score breakdown"
+          >
+            {totalPoints.toFixed(1)}
+          </button>
+        ) : '--';
+      }
+      return (player as Player).score !== undefined ? (player as Player).score?.toFixed(1) : '--';
+    }
+
+    if (col.key === 'pointsPerGame') {
+      if (isPlayerResult) {
+        const ppg = (player as PlayerResult).pointsPerGame;
+        return ppg !== null ? ppg.toFixed(2) : '--';
+      }
+      return '--';
+    }
+
+    // Handle statistic columns
+    if (col.statKey && isPlayerResult) {
+      const stats = (player as PlayerResult).statistics;
+      if (stats && stats[col.statKey] !== undefined) {
+        return stats[col.statKey];
+      }
+      return '--';
+    }
+
+    return '--';
+  };
+
   const sortedPlayers = [...players].sort((a, b) => {
     let aValue: string | number = '';
     let bValue: string | number = '';
 
+    // Handle legacy sorting fields
     switch (sortField) {
       case 'name':
         aValue = a.name;
         bValue = b.name;
         break;
       case 'team':
-        aValue = a.team?.name || '';
-        bValue = b.team?.name || '';
+        if ('teamAbbr' in a) {
+          aValue = (a as PlayerResult).teamAbbr || '';
+          bValue = (b as PlayerResult).teamAbbr || '';
+        } else {
+          aValue = (a as Player).team?.name || '';
+          bValue = (b as Player).team?.name || '';
+        }
         break;
       case 'position':
         aValue = a.position;
         bValue = b.position;
         break;
       case 'score':
-        aValue = a.score || 0;
-        bValue = b.score || 0;
+        if ('totalPoints' in a) {
+          aValue = (a as PlayerResult).totalPoints || 0;
+          bValue = (b as PlayerResult).totalPoints || 0;
+        } else {
+          aValue = (a as Player).score || 0;
+          bValue = (b as Player).score || 0;
+        }
         break;
+      default:
+        // Handle dynamic column sorting
+        if ('statistics' in a && 'statistics' in a) {
+          const aStats = (a as PlayerResult).statistics;
+          const bStats = (b as PlayerResult).statistics;
+          aValue = aStats?.[sortField] || 0;
+          bValue = bStats?.[sortField] || 0;
+        }
     }
 
     if (typeof aValue === 'string' && typeof bValue === 'string') {
@@ -116,7 +205,7 @@ const PlayerList: React.FC<PlayerListProps> = ({
     );
   }
 
-  const getSortIcon = (field: SortField) => {
+  const getSortIcon = (field: string) => {
     if (sortField !== field) return '↕';
     return sortDirection === 'asc' ? '↑' : '↓';
   };
@@ -124,7 +213,7 @@ const PlayerList: React.FC<PlayerListProps> = ({
   return (
     <div className="player-list-container">
       <div className="player-list-header">
-        <h3>Players ({statisticType === 'batting' ? 'Batting' : 'Pitching'} Stats)</h3>
+        <h3>Players ({statisticType === 'hitting' ? 'Hitting' : 'Pitching'} Stats)</h3>
         {pagination && (
           <span className="result-count">
             Showing {players.length} of {pagination.total} players
@@ -136,31 +225,36 @@ const PlayerList: React.FC<PlayerListProps> = ({
         <table className="player-table">
           <thead>
             <tr>
-              <th onClick={() => handleSort('name')} className="sortable">
-                Name {getSortIcon('name')}
-              </th>
-              <th onClick={() => handleSort('team')} className="sortable">
-                Team {getSortIcon('team')}
-              </th>
-              <th onClick={() => handleSort('position')} className="sortable">
-                Position {getSortIcon('position')}
-              </th>
-              <th>Status</th>
-              <th>Season</th>
-              <th onClick={() => handleSort('score')} className="sortable">
-                Score {getSortIcon('score')}
-              </th>
+              {visibleColumns.map((col) => (
+                <th
+                  key={col.key}
+                  onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                  className={col.sortable ? 'sortable' : ''}
+                  style={col.sticky ? { position: 'sticky', left: 0, zIndex: 10, background: 'white' } : {}}
+                  aria-sort={sortField === col.key ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined}
+                >
+                  {col.label} {col.sortable && getSortIcon(col.key)}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {sortedPlayers.map((player) => (
-              <PlayerCard
+              <tr
                 key={player.id}
-                player={player}
+                className="player-row"
                 onClick={() => onPlayerClick?.(player)}
-                onScoreClick={() => onScoreClick?.(player)}
-                statisticType={statisticType}
-              />
+              >
+                {visibleColumns.map((col) => (
+                  <td
+                    key={col.key}
+                    className={`${col.key}-cell`}
+                    style={col.sticky ? { position: 'sticky', left: 0, zIndex: 5, background: 'white' } : {}}
+                  >
+                    {renderCell(player, col)}
+                  </td>
+                ))}
+              </tr>
             ))}
           </tbody>
         </table>

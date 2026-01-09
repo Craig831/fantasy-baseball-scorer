@@ -6,7 +6,7 @@ interface ScoringConfig {
   id: string;
   name: string;
   categories: {
-    batting: Record<string, number>;
+    hitting: Record<string, number>;
     pitching: Record<string, number>;
   };
   isActive: boolean;
@@ -119,16 +119,16 @@ const ScoringConfigsListPage: React.FC = () => {
 
                     <div className="mt-4 grid grid-cols-2 gap-4">
                       <div>
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Batting Stats</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Hitting Stats</h4>
                         <div className="text-sm text-gray-600">
-                          {Object.entries(config.categories.batting).slice(0, 3).map(([stat, points]) => (
+                          {Object.entries(config.categories.hitting).slice(0, 3).map(([stat, points]) => (
                             <div key={stat}>
                               {stat}: {points} pts
                             </div>
                           ))}
-                          {Object.keys(config.categories.batting).length > 3 && (
+                          {Object.keys(config.categories.hitting).length > 3 && (
                             <div className="text-gray-400">
-                              +{Object.keys(config.categories.batting).length - 3} more
+                              +{Object.keys(config.categories.hitting).length - 3} more
                             </div>
                           )}
                         </div>

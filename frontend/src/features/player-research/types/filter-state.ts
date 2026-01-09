@@ -5,7 +5,7 @@
  * Based on research.md section 3: Filter State Management
  */
 
-export type StatisticType = 'batting' | 'pitching';
+export type StatisticType = 'hitting' | 'pitching';
 
 export type PlayerStatus = 'active' | 'inactive' | 'retired';
 
@@ -42,7 +42,7 @@ export interface FilterState {
  * Default Filter Values
  */
 export const DEFAULT_FILTERS: FilterCriteria = {
-  statisticType: 'batting',
+  statisticType: 'hitting',
   positions: [],                               // Empty = all positions
   season: new Date().getFullYear(),
   status: 'active',

@@ -28,7 +28,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersApplied }) => {
   // Position options based on statistic type
   const BATTING_POSITIONS = ['C', '1B', '2B', '3B', 'SS', 'OF', 'LF', 'CF', 'RF', 'DH'];
   const PITCHING_POSITIONS = ['P'];
-  const availablePositions = pending.statisticType === 'batting' ? BATTING_POSITIONS : PITCHING_POSITIONS;
+  const availablePositions = pending.statisticType === 'hitting' ? BATTING_POSITIONS : PITCHING_POSITIONS;
 
   // Generate season options (current year and 10 years back)
   const currentYear = new Date().getFullYear();
@@ -101,11 +101,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersApplied }) => {
             <button
               type="button"
               role="radio"
-              aria-checked={pending.statisticType === 'batting'}
-              className={`toggle-btn ${pending.statisticType === 'batting' ? 'active' : ''}`}
-              onClick={() => handleStatisticTypeChange('batting')}
+              aria-checked={pending.statisticType === 'hitting'}
+              className={`toggle-btn ${pending.statisticType === 'hitting' ? 'active' : ''}`}
+              onClick={() => handleStatisticTypeChange('hitting')}
             >
-              Batting
+              Hitting
             </button>
             <button
               type="button"

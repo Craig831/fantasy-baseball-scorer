@@ -10,15 +10,15 @@ export class CreateScoringConfigDto {
   name: string;
 
   @ApiProperty({
-    description: 'Scoring categories with batting and pitching stats',
+    description: 'Scoring categories with hitting and pitching stats',
     example: {
-      batting: { hits: 1.0, homeRuns: 4.0, rbis: 1.0 },
+      hitting: { hits: 1.0, homeRuns: 4.0, rbis: 1.0 },
       pitching: { wins: 5.0, strikeouts: 1.0, saves: 5.0 }
     }
   })
   @IsObject()
   categories: {
-    batting: Record<string, number>;
+    hitting: Record<string, number>;
     pitching: Record<string, number>;
   };
 

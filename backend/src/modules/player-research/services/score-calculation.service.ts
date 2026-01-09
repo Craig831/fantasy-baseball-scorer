@@ -4,13 +4,12 @@ import { ScoreBreakdownDto, CategoryScoreDto } from '../dto/score-breakdown.dto'
 interface ScoringConfig {
   id: string;
   categories: {
-    batting: Record<string, number>;
+    hitting: Record<string, number>;
     pitching: Record<string, number>;
   };
 }
 
 interface PlayerStatistic {
-  statisticType: string;
   statistics: any; // JSONB field
 }
 
@@ -34,24 +33,22 @@ export class ScoreCalculationService {
       return null;
     }
 
-    // Determine statistic type based on position
+    // Get most recent statistics (already ordered by dateFrom desc)
+    const stats = player.statistics[0];
+
+    if (!stats || !stats.statistics) {
+      return null;
+    }
+
+    // Determine statistic type based on position (for scoring categories)
     const isPitcher = player.position.toLowerCase().includes('pitcher') ||
                      player.position.toLowerCase() === 'p';
     const statisticType = isPitcher ? 'pitching' : 'batting';
 
-    // Find matching statistics
-    const stats = player.statistics.find(
-      (s) => s.statisticType === statisticType,
-    );
-
-    if (!stats) {
-      return null;
-    }
-
     // Get relevant scoring categories
     const categories = isPitcher
       ? config.categories.pitching
-      : config.categories.batting;
+      : config.categories.hitting;
 
     // Calculate scores for each category
     const categoryScores: CategoryScoreDto[] = [];

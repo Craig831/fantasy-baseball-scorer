@@ -6,6 +6,7 @@ import ScoringConfigSelector from '../../components/player-research/ScoringConfi
 import ScoreBreakdownModal from '../../components/player-research/ScoreBreakdownModal';
 import { Player, PlayerSearchFilters, ScoreBreakdown } from '../../types/player';
 import { searchPlayers, getPositions, getPlayerScoreBreakdown } from '../../services/api';
+import { ScoringConfig, PlayerResult } from '../../features/player-research/types/player-result';
 import './PlayerResearch.css';
 
 interface SearchResponse {
@@ -27,7 +28,7 @@ const PlayerResearch: React.FC = () => {
   const getInitialFilters = (): PlayerSearchFilters => {
     const positions = searchParams.getAll('position');
     const league = searchParams.get('league') as 'both' | 'AL' | 'NL' | null;
-    const statisticType = searchParams.get('statisticType') as 'batting' | 'pitching' | null;
+    const statisticType = searchParams.get('statisticType') as 'hitting' | 'pitching' | null;
     const status = searchParams.get('status');
     const season = searchParams.get('season');
     const dateFrom = searchParams.get('dateFrom');
@@ -36,7 +37,7 @@ const PlayerResearch: React.FC = () => {
     return {
       position: positions.length > 0 ? positions : [],
       league: league || 'both',
-      statisticType: statisticType || 'batting',
+      statisticType: statisticType || 'hitting',
       status: status || 'active',
       season: season ? parseInt(season, 10) : new Date().getFullYear(),
       dateFrom: dateFrom || undefined,
@@ -52,6 +53,7 @@ const PlayerResearch: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [positions, setPositions] = useState<string[]>([]);
   const [scoringConfigId, setScoringConfigId] = useState<string | null>(null);
+  const [scoringConfig, setScoringConfig] = useState<ScoringConfig | null>(null);
   const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdown | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [sortBy, setSortBy] = useState<string>('name');
@@ -64,6 +66,30 @@ const PlayerResearch: React.FC = () => {
       setPositions(positionList);
     } catch (err) {
       console.error('Failed to load positions:', err);
+    }
+  }, []);
+
+  // Load full scoring configuration details
+  const loadScoringConfig = useCallback(async (configId: string) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/scoring-configs/${configId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load scoring configuration');
+      }
+
+      const data = await response.json();
+      setScoringConfig(data.data);
+    } catch (err) {
+      console.error('Failed to load scoring configuration:', err);
+      setScoringConfig(null);
     }
   }, []);
 
@@ -100,6 +126,11 @@ const PlayerResearch: React.FC = () => {
   // Handle scoring config change
   const handleConfigChange = (configId: string | null) => {
     setScoringConfigId(configId);
+    if (configId) {
+      loadScoringConfig(configId);
+    } else {
+      setScoringConfig(null);
+    }
     performSearch(filters, 1, configId, sortBy, sortOrder);
   };
 
@@ -137,19 +168,29 @@ const PlayerResearch: React.FC = () => {
   };
 
   // Handle player click
-  const handlePlayerClick = (player: Player) => {
+  const handlePlayerClick = (player: Player | PlayerResult) => {
     // Future: Open player details modal or navigate to player page
     console.log('Player clicked:', player);
   };
 
   // Handle score click to show breakdown
-  const handleScoreClick = async (player: Player) => {
+  const handleScoreClick = async (player: Player | PlayerResult) => {
     if (!scoringConfigId) return;
 
     try {
       const breakdown = await getPlayerScoreBreakdown(player.id, scoringConfigId);
       setScoreBreakdown(breakdown);
-      setSelectedPlayer(player);
+      // Convert PlayerResult to Player for the modal (it expects Player type)
+      const playerForModal: Player = 'season' in player
+        ? player as Player
+        : {
+            ...player,
+            teamId: '',
+            season: new Date().getFullYear(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          } as Player;
+      setSelectedPlayer(playerForModal);
     } catch (err) {
       console.error('Failed to load score breakdown:', err);
     }
@@ -196,7 +237,8 @@ const PlayerResearch: React.FC = () => {
           onPlayerClick={handlePlayerClick}
           onScoreClick={handleScoreClick}
           onSortChange={handleSortChange}
-          statisticType={filters.statisticType || 'batting'}
+          statisticType={filters.statisticType || 'hitting'}
+          scoringConfig={scoringConfig}
         />
       </div>
 

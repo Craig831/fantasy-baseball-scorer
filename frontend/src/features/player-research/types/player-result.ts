@@ -109,14 +109,28 @@ export interface ColumnConfig {
 }
 
 /**
- * Base columns (always shown)
+ * Core columns always shown regardless of scoring config
  */
-export const BASE_COLUMNS: ColumnConfig[] = [
+const CORE_BASE_COLUMNS: ColumnConfig[] = [
   { key: 'playerName', label: 'Player', sortable: true, sticky: true },
   { key: 'position', label: 'Pos', sortable: true, sticky: true },
   { key: 'teamAbbr', label: 'Team', sortable: true, sticky: true },
+];
+
+/**
+ * Score columns only shown when scoring config is selected
+ */
+const SCORE_COLUMNS: ColumnConfig[] = [
   { key: 'totalPoints', label: 'PTS', sortable: true },
   { key: 'pointsPerGame', label: 'PPG', sortable: true }
+];
+
+/**
+ * Base columns (for backward compatibility)
+ */
+export const BASE_COLUMNS: ColumnConfig[] = [
+  ...CORE_BASE_COLUMNS,
+  ...SCORE_COLUMNS
 ];
 
 /**
@@ -151,3 +165,62 @@ export const PITCHER_STAT_COLUMNS: ColumnConfig[] = [
   { key: 'bb', label: 'BB', statKey: 'bb', sortable: true },
   { key: 'k', label: 'K', statKey: 'k', sortable: true }
 ];
+
+/**
+ * Scoring Configuration Interface
+ * Minimal interface for determining visible columns
+ */
+export interface ScoringConfig {
+  id: string;
+  name: string;
+  categories: {
+    hitting: Record<string, number>;
+    pitching: Record<string, number>;
+  };
+}
+
+/**
+ * Get visible columns based on statistic type and scoring configuration
+ * Returns base columns + filtered stat columns
+ *
+ * @param statisticType - 'hitting' or 'pitching'
+ * @param scoringConfig - Active scoring configuration (optional)
+ * @returns Array of column configurations to display
+ */
+export function getVisibleColumns(
+  statisticType: 'hitting' | 'pitching',
+  scoringConfig?: ScoringConfig | null
+): ColumnConfig[] {
+  // Start with core columns (always shown)
+  const columns = [...CORE_BASE_COLUMNS];
+
+  // Add score columns ONLY if scoring config is provided
+  if (scoringConfig && scoringConfig.categories) {
+    columns.push(...SCORE_COLUMNS);
+  }
+
+  // Select stat columns based on statistic type
+  const statColumns = statisticType === 'hitting' ? BATTER_STAT_COLUMNS : PITCHER_STAT_COLUMNS;
+
+  // If no scoring config, show all stat columns
+  if (!scoringConfig || !scoringConfig.categories) {
+    return [...columns, ...statColumns];
+  }
+
+  // Get the relevant scoring categories for this statistic type
+  const scoringCategories = statisticType === 'hitting'
+    ? scoringConfig.categories.hitting
+    : scoringConfig.categories.pitching;
+
+  // Filter stat columns to only show those in the scoring configuration
+  const scoredStatKeys = new Set(
+    Object.keys(scoringCategories).map(key => key.toLowerCase())
+  );
+
+  const filteredStatColumns = statColumns.filter(col => {
+    if (!col.statKey) return false;
+    return scoredStatKeys.has(col.statKey.toLowerCase());
+  });
+
+  return [...columns, ...filteredStatColumns];
+}

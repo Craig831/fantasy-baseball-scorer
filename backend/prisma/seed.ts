@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 
 // Configuration
 const BCRYPT_ROUNDS = 10;
-const CURRENT_SEASON = new Date().getFullYear();
+const CURRENT_SEASON = 2024; // Fixed season for consistent test data
 
 // Sample password for all test users: "Password123!"
 const TEST_PASSWORD = 'Password123!';
@@ -164,99 +164,87 @@ async function seedTeams() {
 async function seedScoringConfigurations() {
   console.log('Seeding scoring configurations...');
 
+  // Delete existing configs to ensure we use the updated format
   const existingConfigs = await prisma.scoringConfiguration.count();
   if (existingConfigs > 0) {
-    console.log(`  ↳ Skipping: ${existingConfigs} configs already exist`);
-    return;
+    console.log(`  ↳ Deleting ${existingConfigs} old configs to update format...`);
+    await prisma.scoringConfiguration.deleteMany({});
   }
 
-  const users = await prisma.user.findMany({ take: 3 });
+  const users = await prisma.user.findMany();
   if (users.length === 0) {
     console.log('  ⚠ No users found, skipping scoring configurations');
     return;
   }
 
+  // Use first user for all configs if not enough users
+  const user1 = users[0];
+  const user2 = users.length > 1 ? users[1] : users[0];
+  const user3 = users.length > 2 ? users[2] : users[0];
+
   const standardHittingCategories = {
     hitting: {
-      runs: 1,
-      hits: 1,
-      doubles: 2,
-      triples: 3,
-      homeRuns: 4,
-      rbi: 1,
-      stolenBases: 2,
-      walks: 1,
-      strikeouts: -0.5,
-      battingAverage: 10,
+      r: 1,        // runs
+      h: 1,        // hits
+      '2b': 2,     // doubles
+      '3b': 3,     // triples
+      hr: 4,       // homeRuns
+      rbi: 1,      // rbi
+      sb: 2,       // stolenBases
+      bb: 1,       // walks (baseOnBalls)
+      k: -0.5,     // strikeouts
     },
     pitching: {
-      wins: 5,
-      losses: -3,
-      saves: 5,
-      strikeouts: 1,
-      walks: -1,
-      era: -10,
-      whip: -10,
-      inningsPitched: 3,
+      w: 5,        // wins
+      l: -3,       // losses
+      s: 5,        // saves
+      k: 1,        // strikeouts
+      bb: -1,      // walks (baseOnBalls)
+      er: -1,      // earnedRuns
     },
   };
 
   const rotisserieCategories = {
     hitting: {
-      runs: 1,
-      homeRuns: 1,
-      rbi: 1,
-      stolenBases: 1,
-      battingAverage: 1,
+      r: 1,        // runs
+      hr: 1,       // homeRuns
+      rbi: 1,      // rbi
+      sb: 1,       // stolenBases
     },
     pitching: {
-      wins: 1,
-      saves: 1,
-      strikeouts: 1,
-      era: 1,
-      whip: 1,
+      w: 1,        // wins
+      s: 1,        // saves
+      k: 1,        // strikeouts
+      er: -1,      // earnedRuns (used for ERA calculation)
     },
   };
 
   const powerHitterCategories = {
     hitting: {
-      homeRuns: 5,
-      rbi: 2,
-      sluggingPercentage: 15,
-      extraBaseHits: 3,
-      totalBases: 1,
+      hr: 5,       // homeRuns
+      rbi: 2,      // rbi
+      '2b': 2,     // doubles (extraBaseHits)
+      '3b': 3,     // triples (extraBaseHits)
     },
     pitching: {
-      strikeouts: 2,
-      wins: 4,
-      qualityStarts: 5,
+      k: 2,        // strikeouts
+      w: 4,        // wins
+      gs: 3,       // gamesStarted (quality starts proxy)
     },
   };
 
   const configs = [
     {
-      userId: users[0].id,
+      userId: user1.id,
       name: 'Standard Points',
       categories: standardHittingCategories,
       isActive: true,
     },
     {
-      userId: users[0].id,
+      userId: user1.id,
       name: 'Rotisserie League',
       categories: rotisserieCategories,
       isActive: false,
-    },
-    {
-      userId: users[1].id,
-      name: 'Power Hitter League',
-      categories: powerHitterCategories,
-      isActive: true,
-    },
-    {
-      userId: users[2].id,
-      name: 'Custom League',
-      categories: standardHittingCategories,
-      isActive: true,
     },
   ];
 
@@ -270,10 +258,11 @@ async function seedScoringConfigurations() {
 async function seedPlayers() {
   console.log('Seeding players...');
 
+  // Delete existing players to ensure consistent season
   const existingPlayers = await prisma.player.count();
   if (existingPlayers > 0) {
-    console.log(`  ↳ Skipping: ${existingPlayers} players already exist`);
-    return;
+    console.log(`  ↳ Deleting ${existingPlayers} old players to reseed with correct season...`);
+    await prisma.player.deleteMany({});
   }
 
   const teams = await prisma.team.findMany();
@@ -286,13 +275,13 @@ async function seedPlayers() {
   const playerData = [
     // Yankees
     { mlbPlayerId: 592450, name: 'Aaron Judge', position: 'OF', jerseyNumber: 99, teamAbbr: 'NYY' },
-    { mlbPlayerId: 660271, name: 'Gerrit Cole', position: 'P', jerseyNumber: 45, teamAbbr: 'NYY' },
+    { mlbPlayerId: 543037, name: 'Gerrit Cole', position: 'P', jerseyNumber: 45, teamAbbr: 'NYY' },
     { mlbPlayerId: 596115, name: 'Giancarlo Stanton', position: 'OF', jerseyNumber: 27, teamAbbr: 'NYY' },
 
     // Dodgers
-    { mlbPlayerId: 660670, name: 'Mookie Betts', position: 'OF', jerseyNumber: 50, teamAbbr: 'LAD' },
-    { mlbPlayerId: 605141, name: 'Freddie Freeman', position: '1B', jerseyNumber: 5, teamAbbr: 'LAD' },
-    { mlbPlayerId: 624133, name: 'Clayton Kershaw', position: 'P', jerseyNumber: 22, teamAbbr: 'LAD' },
+    { mlbPlayerId: 605141, name: 'Mookie Betts', position: 'OF', jerseyNumber: 50, teamAbbr: 'LAD' },
+    { mlbPlayerId: 518692, name: 'Freddie Freeman', position: '1B', jerseyNumber: 5, teamAbbr: 'LAD' },
+    { mlbPlayerId: 477132, name: 'Clayton Kershaw', position: 'P', jerseyNumber: 22, teamAbbr: 'LAD' },
 
     // Astros
     { mlbPlayerId: 514888, name: 'Jose Altuve', position: '2B', jerseyNumber: 27, teamAbbr: 'HOU' },
@@ -301,7 +290,7 @@ async function seedPlayers() {
 
     // Braves
     { mlbPlayerId: 645277, name: 'Ronald Acuña Jr.', position: 'OF', jerseyNumber: 13, teamAbbr: 'ATL' },
-    { mlbPlayerId: 571448, name: 'Matt Olson', position: '1B', jerseyNumber: 28, teamAbbr: 'ATL' },
+    { mlbPlayerId: 621566, name: 'Matt Olson', position: '1B', jerseyNumber: 28, teamAbbr: 'ATL' },
     { mlbPlayerId: 675911, name: 'Spencer Strider', position: 'P', jerseyNumber: 99, teamAbbr: 'ATL' },
 
     // Padres
@@ -321,8 +310,8 @@ async function seedPlayers() {
 
     // Mets
     { mlbPlayerId: 624413, name: 'Pete Alonso', position: '1B', jerseyNumber: 20, teamAbbr: 'NYM' },
-    { mlbPlayerId: 660271, name: 'Francisco Lindor', position: 'SS', jerseyNumber: 12, teamAbbr: 'NYM' },
-    { mlbPlayerId: 592789, name: 'Edwin Díaz', position: 'P', jerseyNumber: 39, teamAbbr: 'NYM' },
+    { mlbPlayerId: 596019, name: 'Francisco Lindor', position: 'SS', jerseyNumber: 12, teamAbbr: 'NYM' },
+    { mlbPlayerId: 621242, name: 'Edwin Díaz', position: 'P', jerseyNumber: 39, teamAbbr: 'NYM' },
 
     // Red Sox
     { mlbPlayerId: 646240, name: 'Rafael Devers', position: '3B', jerseyNumber: 11, teamAbbr: 'BOS' },
@@ -332,30 +321,30 @@ async function seedPlayers() {
     { mlbPlayerId: 677551, name: 'Luis Robert Jr.', position: 'OF', jerseyNumber: 88, teamAbbr: 'CWS' },
 
     // Guardians
-    { mlbPlayerId: 666205, name: 'José Ramírez', position: '3B', jerseyNumber: 11, teamAbbr: 'CLE' },
+    { mlbPlayerId: 608070, name: 'José Ramírez', position: '3B', jerseyNumber: 11, teamAbbr: 'CLE' },
 
     // Twins
-    { mlbPlayerId: 516416, name: 'Carlos Correa', position: 'SS', jerseyNumber: 4, teamAbbr: 'MIN' },
+    { mlbPlayerId: 621043, name: 'Carlos Correa', position: 'SS', jerseyNumber: 4, teamAbbr: 'MIN' },
 
     // Brewers
-    { mlbPlayerId: 669257, name: 'Christian Yelich', position: 'OF', jerseyNumber: 22, teamAbbr: 'MIL' },
+    { mlbPlayerId: 592885, name: 'Christian Yelich', position: 'OF', jerseyNumber: 22, teamAbbr: 'MIL' },
 
     // Cardinals
-    { mlbPlayerId: 660162, name: 'Nolan Arenado', position: '3B', jerseyNumber: 28, teamAbbr: 'STL' },
-    { mlbPlayerId: 571945, name: 'Paul Goldschmidt', position: '1B', jerseyNumber: 46, teamAbbr: 'STL' },
+    { mlbPlayerId: 571448, name: 'Nolan Arenado', position: '3B', jerseyNumber: 28, teamAbbr: 'STL' },
+    { mlbPlayerId: 502671, name: 'Paul Goldschmidt', position: '1B', jerseyNumber: 46, teamAbbr: 'STL' },
 
     // Cubs
     { mlbPlayerId: 682073, name: 'Christopher Morel', position: 'OF', jerseyNumber: 5, teamAbbr: 'CHC' },
 
     // Rangers
-    { mlbPlayerId: 608070, name: 'Corey Seager', position: 'SS', jerseyNumber: 5, teamAbbr: 'TEX' },
+    { mlbPlayerId: 608369, name: 'Corey Seager', position: 'SS', jerseyNumber: 5, teamAbbr: 'TEX' },
     { mlbPlayerId: 605131, name: 'Marcus Semien', position: '2B', jerseyNumber: 2, teamAbbr: 'TEX' },
 
     // Mariners
     { mlbPlayerId: 666176, name: 'Julio Rodríguez', position: 'OF', jerseyNumber: 44, teamAbbr: 'SEA' },
 
     // Angels
-    { mlbPlayerId: 660670, name: 'Mike Trout', position: 'OF', jerseyNumber: 27, teamAbbr: 'LAA' },
+    { mlbPlayerId: 545361, name: 'Mike Trout', position: 'OF', jerseyNumber: 27, teamAbbr: 'LAA' },
     { mlbPlayerId: 660271, name: 'Shohei Ohtani', position: 'DH', jerseyNumber: 17, teamAbbr: 'LAA' },
   ];
 
@@ -404,18 +393,24 @@ async function seedPlayers() {
 }
 
 /**
- * Seed player statistics for some players
+ * Seed player statistics for real MLB players
  */
 async function seedPlayerStatistics() {
   console.log('Seeding player statistics...');
 
+  // Delete existing stats to reseed with updated logic
   const existingStats = await prisma.playerStatistic.count();
   if (existingStats > 0) {
-    console.log(`  ↳ Skipping: ${existingStats} statistics already exist`);
-    return;
+    console.log(`  ↳ Deleting ${existingStats} old statistics to reseed...`);
+    await prisma.playerStatistic.deleteMany({});
   }
 
-  const players = await prisma.player.findMany({ take: 20 });
+  // Get all real MLB players (mlbPlayerId < 700000), not the randomly generated ones
+  const players = await prisma.player.findMany({
+    where: {
+      mlbPlayerId: { lt: 700000 }
+    }
+  });
   if (players.length === 0) {
     console.log('  ⚠ No players found, skipping statistics');
     return;
@@ -434,7 +429,6 @@ async function seedPlayerStatistics() {
       statistics.push({
         playerId: player.id,
         season: CURRENT_SEASON,
-        statisticType: 'season',
         statistics: {
           gamesPlayed: Math.floor(Math.random() * 50) + 100,
           atBats: Math.floor(Math.random() * 200) + 400,
@@ -459,7 +453,6 @@ async function seedPlayerStatistics() {
       statistics.push({
         playerId: player.id,
         season: CURRENT_SEASON,
-        statisticType: 'season',
         statistics: {
           gamesPlayed: Math.floor(Math.random() * 20) + 25,
           gamesStarted: Math.floor(Math.random() * 20) + 20,

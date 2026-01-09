@@ -46,7 +46,6 @@ model ScoringConfiguration {
   lineups       Lineup[]
   savedSearches SavedSearch[]
 
-  @@unique([userId, isActive], name: "unique_active_config")
   @@index([userId], name: "idx_scoring_configs_user_id")
   @@index([userId, isActive], name: "idx_scoring_configs_user_active")
   @@map("scoring_configurations")
@@ -101,7 +100,6 @@ model PlayerStatistic {
   id            String   @id @default(uuid())
   playerId      String   @map("player_id")
   season        Int
-  statisticType String   @map("statistic_type") @db.VarChar(20)
   statistics    Json
   dateFrom      DateTime @map("date_from") @db.Date
   dateTo        DateTime @map("date_to") @db.Date
@@ -110,7 +108,7 @@ model PlayerStatistic {
 
   player        Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
-  @@unique([playerId, season, statisticType, dateFrom, dateTo], name: "unique_player_season_stats")
+  @@unique([playerId, season, dateFrom, dateTo], name: "unique_player_season_stats")
   @@index([playerId], name: "idx_player_stats_player_id")
   @@index([season], name: "idx_player_stats_season")
   @@index([dateFrom, dateTo], name: "idx_player_stats_dates")

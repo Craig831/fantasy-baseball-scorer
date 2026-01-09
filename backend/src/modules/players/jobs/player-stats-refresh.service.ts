@@ -131,7 +131,6 @@ export class PlayerStatsRefreshService {
         unique_player_season_stats: {
           playerId,
           season,
-          statisticType: statGroup,
           dateFrom,
           dateTo,
         },
@@ -143,7 +142,6 @@ export class PlayerStatsRefreshService {
       create: {
         playerId,
         season,
-        statisticType: statGroup,
         statistics: statSplit.stat as any,
         dateFrom,
         dateTo,

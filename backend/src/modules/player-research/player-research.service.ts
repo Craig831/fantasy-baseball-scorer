@@ -20,11 +20,11 @@ export class PlayerResearchService {
   buildFilterWhereClause(filters: SearchPlayersDto): Prisma.PlayerWhereInput {
     const where: Prisma.PlayerWhereInput = {};
 
-    // T011: Handle statisticType filter (batting or pitching)
+    // T011: Handle statisticType filter (hitting or pitching)
     if (filters.statisticType) {
-      // For batting: filter out pitchers (P)
+      // For hitting: filter out pitchers (P)
       // For pitching: only include pitchers (P)
-      if (filters.statisticType === StatisticType.BATTING) {
+      if (filters.statisticType === StatisticType.HITTING) {
         where.position = {
           not: 'P',
         };
@@ -55,6 +55,12 @@ export class PlayerResearchService {
 
   /**
    * Build query for player statistics based on date range
+   *
+   * NOTE: Do NOT filter by filters.statisticType here.
+   * - filters.statisticType = 'hitting'|'pitching' (player position type from filter panel)
+   * - PlayerStatistic.statisticType was removed from schema (date filtering is sufficient)
+   * Player type filtering happens in buildFilterWhereClause
+   * by filtering on player.position (P for pitchers, everything else for batters).
    */
   buildStatisticsFilter(filters: SearchPlayersDto): Prisma.PlayerStatisticWhereInput {
     const where: Prisma.PlayerStatisticWhereInput = {};
@@ -77,10 +83,10 @@ export class PlayerResearchService {
       where.season = filters.season;
     }
 
-    // Match statistic type if provided
-    if (filters.statisticType) {
-      where.statisticType = filters.statisticType;
-    }
+    // REMOVED: Don't filter statistics by filters.statisticType
+    // The statisticType field was removed from the database schema.
+    // Player type filtering (hitting/pitching) is handled
+    // by the main player WHERE clause in buildFilterWhereClause.
 
     return where;
   }
@@ -133,17 +139,31 @@ export class PlayerResearchService {
       });
     }
 
-    // T019: Transform players to include teamAbbr, formatted names, and scores
+    // T019: Transform players to include teamAbbr, formatted names, statistics, and scores
     const transformedPlayers = players.map((player) => {
       const base = this.transformPlayerResponse(player);
+
+      // ALWAYS transform statistics to short codes (required by frontend)
+      const transformedStats = this.extractAndTransformStatistics(player);
 
       // Calculate scores if scoring config provided
       if (scoringConfig) {
         const scoreData = this.calculatePlayerScores(player, scoringConfig, filters.statisticType);
-        return { ...base, ...scoreData };
+        return {
+          ...base,
+          statistics: transformedStats,      // ← Always include transformed stats
+          totalPoints: scoreData.totalPoints,  // ← Only include when scoring config
+          pointsPerGame: scoreData.pointsPerGame,
+        };
       }
 
-      return base;
+      // No scoring config: include stats with null scores (matches PlayerResult interface)
+      return {
+        ...base,
+        statistics: transformedStats,
+        totalPoints: null,      // ← ALWAYS include, set to null when no config
+        pointsPerGame: null,    // ← ALWAYS include, set to null when no config
+      };
     });
 
     return { players: transformedPlayers, total };
@@ -172,20 +192,81 @@ export class PlayerResearchService {
     // Calculate points per game
     const pointsPerGame = gamesPlayed > 0 ? scoreBreakdown.totalScore / gamesPlayed : 0;
 
-    // Filter statistics to only include scored stats
-    const filteredStats = stats?.statistics
-      ? this.columnConfig.filterStatistics(
-          stats.statistics,
-          scoreBreakdown.statisticType as 'batting' | 'pitching',
-          { categories: scoringConfig.categories },
-        )
-      : null;
-
+    // Note: Statistics transformation now happens in searchPlayers()
+    // This method just returns scoring metrics
     return {
       totalPoints: scoreBreakdown.totalScore,
       pointsPerGame: Math.round(pointsPerGame * 100) / 100, // Round to 2 decimals
-      statistics: filteredStats,
     };
+  }
+
+  /**
+   * Transform statistics from MLB API long format to short codes
+   * Maps: gamesPlayed -> gp, atBats -> ab, homeRuns -> hr, etc.
+   */
+  private transformStatisticsToShortCodes(stats: any): Record<string, number> {
+    const mapping: Record<string, string> = {
+      // Hitting stats
+      gamesPlayed: 'gp',
+      atBats: 'ab',
+      hits: 'h',
+      doubles: '2b',
+      triples: '3b',
+      homeRuns: 'hr',
+      runs: 'r',
+      rbi: 'rbi',
+      baseOnBalls: 'bb',
+      strikeOuts: 'k',
+      stolenBases: 'sb',
+      caughtStealing: 'cs',
+      // Pitching stats
+      gamesStarted: 'gs',
+      wins: 'w',
+      losses: 'l',
+      saves: 's',
+      holds: 'h_pitcher',
+      earnedRuns: 'er',
+    };
+
+    const transformed: Record<string, number> = {};
+
+    // Copy over stats that are already in short format
+    Object.keys(stats).forEach((key) => {
+      if (typeof stats[key] === 'number') {
+        // If already in short format, use as-is
+        transformed[key] = stats[key];
+      }
+    });
+
+    // Transform long format to short format
+    Object.keys(mapping).forEach((longKey) => {
+      if (stats[longKey] !== undefined) {
+        const shortKey = mapping[longKey];
+        transformed[shortKey] = stats[longKey];
+      }
+    });
+
+    return transformed;
+  }
+
+  /**
+   * Extract and transform player statistics from Prisma result
+   * Converts nested array structure to flat object with short codes
+   */
+  private extractAndTransformStatistics(player: any): Record<string, number> | null {
+    const statsArray = player.statistics;
+
+    if (!statsArray || statsArray.length === 0) {
+      return null;
+    }
+
+    const rawStats = statsArray[0]?.statistics;
+
+    if (!rawStats) {
+      return null;
+    }
+
+    return this.transformStatisticsToShortCodes(rawStats);
   }
 
   /**

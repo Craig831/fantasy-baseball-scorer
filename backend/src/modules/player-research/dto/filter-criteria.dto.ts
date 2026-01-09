@@ -13,10 +13,10 @@ import {
 } from 'class-validator';
 
 /**
- * Statistic Type Enum - batting or pitching
+ * Statistic Type Enum - hitting or pitching
  */
 export enum StatisticType {
-  BATTING = 'batting',
+  HITTING = 'hitting',
   PITCHING = 'pitching',
 }
 
@@ -62,7 +62,7 @@ export class FilterCriteriaDto {
   @ApiProperty({
     description: 'Statistic type to filter players by',
     enum: StatisticType,
-    example: StatisticType.BATTING,
+    example: StatisticType.HITTING,
   })
   @IsEnum(StatisticType)
   statisticType: StatisticType;
@@ -110,7 +110,7 @@ export class FilterCriteriaDto {
  * Default Filter Values
  */
 export const DEFAULT_FILTERS: FilterCriteriaDto = {
-  statisticType: StatisticType.BATTING,
+  statisticType: StatisticType.HITTING,
   positions: [],
   season: new Date().getFullYear(),
   status: PlayerStatus.ACTIVE,

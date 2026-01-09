@@ -24,14 +24,7 @@ export class PlayerStatistic implements Partial<PrismaPlayerStatistic> {
   season: number;
 
   @ApiProperty({
-    description: 'Type of statistics',
-    example: 'hitting',
-    enum: ['hitting', 'pitching'],
-  })
-  statisticType: string;
-
-  @ApiProperty({
-    description: 'Statistics data (batting or pitching)',
+    description: 'Statistics data (hitting or pitching)',
     example: {
       gamesPlayed: 157,
       atBats: 599,

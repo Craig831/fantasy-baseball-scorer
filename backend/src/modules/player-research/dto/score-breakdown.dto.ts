@@ -52,8 +52,8 @@ export class ScoreBreakdownDto {
   categoryScores: CategoryScoreDto[];
 
   @ApiProperty({
-    description: 'Type of statistics used (batting or pitching)',
-    example: 'batting',
+    description: 'Type of statistics used (hitting or pitching)',
+    example: 'hitting',
   })
   statisticType: string;
 }

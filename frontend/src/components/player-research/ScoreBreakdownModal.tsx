@@ -38,7 +38,7 @@ const ScoreBreakdownModal: React.FC<ScoreBreakdownModalProps> = ({
           </div>
 
           <div className="stat-type-badge">
-            {breakdown.statisticType === 'batting' ? 'Batting Stats' : 'Pitching Stats'}
+            {breakdown.statisticType === 'hitting' ? 'Hitting Stats' : 'Pitching Stats'}
           </div>
 
           <div className="categories-section">

@@ -16,7 +16,7 @@ export interface ColumnConfig {
  */
 export interface ScoringConfig {
   categories: {
-    batting?: Record<string, number>;
+    hitting?: Record<string, number>;
     pitching?: Record<string, number>;
   };
 }
@@ -76,12 +76,12 @@ export class ColumnConfigurationService {
   /**
    * Get columns for a specific statistic type based on scoring configuration
    *
-   * @param statisticType - 'batting' or 'pitching'
+   * @param statisticType - 'hitting' or 'pitching'
    * @param scoringConfig - The active scoring configuration (optional)
    * @returns Array of columns to display
    */
   getColumnsForType(
-    statisticType: 'batting' | 'pitching',
+    statisticType: 'hitting' | 'pitching',
     scoringConfig?: ScoringConfig,
   ): ColumnConfig[] {
     const columns = [...this.BASE_COLUMNS];
@@ -93,14 +93,14 @@ export class ColumnConfigurationService {
 
     // Get all stat columns for this type
     const allStatColumns =
-      statisticType === 'batting'
+      statisticType === 'hitting'
         ? this.BATTER_STAT_COLUMNS
         : this.PITCHER_STAT_COLUMNS;
 
     // Get the scoring categories for this type
     const scoringCategories =
-      statisticType === 'batting'
-        ? scoringConfig.categories.batting
+      statisticType === 'hitting'
+        ? scoringConfig.categories.hitting
         : scoringConfig.categories.pitching;
 
     // If no scoring categories, return just base columns
@@ -147,13 +147,13 @@ export class ColumnConfigurationService {
    * Filter player statistics to only include columns in scoring config
    *
    * @param statistics - Raw player statistics object
-   * @param statisticType - 'batting' or 'pitching'
+   * @param statisticType - 'hitting' or 'pitching'
    * @param scoringConfig - The active scoring configuration (optional)
    * @returns Filtered statistics object
    */
   filterStatistics(
     statistics: Record<string, number>,
-    statisticType: 'batting' | 'pitching',
+    statisticType: 'hitting' | 'pitching',
     scoringConfig?: ScoringConfig,
   ): Record<string, number> {
     // If no scoring config, return empty object

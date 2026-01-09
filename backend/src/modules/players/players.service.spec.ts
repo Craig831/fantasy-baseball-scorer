@@ -3,7 +3,7 @@ import { PlayersService } from './players.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScoringConfigsService } from '../scoring-configs/scoring-configs.service';
 import { ScoreCalculationService } from '../player-research/services/score-calculation.service';
-import { SearchPlayersDto } from '../player-research/dto/search-players.dto';
+import { SearchPlayersDto, StatisticType } from '../player-research/dto/search-players.dto';
 
 describe('PlayersService', () => {
   let service: PlayersService;
@@ -131,7 +131,7 @@ describe('PlayersService', () => {
     describe('filtering', () => {
       it('should filter by hitting statistic type (exclude pitchers)', async () => {
         const filters: SearchPlayersDto = {
-          statisticType: 'hitting',
+          statisticType: StatisticType.HITTING,
           page: 1,
           limit: 50,
         };
@@ -154,7 +154,7 @@ describe('PlayersService', () => {
 
       it('should filter by pitching statistic type (only pitchers)', async () => {
         const filters: SearchPlayersDto = {
-          statisticType: 'pitching',
+          statisticType: StatisticType.PITCHING,
           page: 1,
           limit: 50,
         };
@@ -178,7 +178,7 @@ describe('PlayersService', () => {
       it('should filter by specific positions', async () => {
         const filters: SearchPlayersDto = {
           position: ['OF', '1B'],
-          statisticType: 'hitting',
+          statisticType: StatisticType.HITTING,
           page: 1,
           limit: 50,
         };
@@ -317,7 +317,7 @@ describe('PlayersService', () => {
           league: 'AL',
           status: 'active',
           season: 2024,
-          statisticType: 'hitting',
+          statisticType: StatisticType.HITTING,
           page: 1,
           limit: 50,
         };

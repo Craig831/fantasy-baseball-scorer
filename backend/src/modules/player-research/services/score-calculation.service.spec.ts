@@ -7,7 +7,7 @@ describe('ScoreCalculationService', () => {
   const mockBattingConfig = {
     id: 'config-1',
     categories: {
-      batting: {
+      hitting: {
         hits: 1,
         homeRuns: 4,
         rbi: 1,
@@ -21,7 +21,7 @@ describe('ScoreCalculationService', () => {
   const mockPitchingConfig = {
     id: 'config-2',
     categories: {
-      batting: {},
+      hitting: {},
       pitching: {
         wins: 5,
         strikeouts: 1,
@@ -45,14 +45,13 @@ describe('ScoreCalculationService', () => {
   });
 
   describe('calculatePlayerScore', () => {
-    describe('batting statistics', () => {
+    describe('hitting statistics', () => {
       it('should calculate score for a batter with statistics', () => {
         const player = {
           id: 'player-1',
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: {
                 hits: 150,
                 homeRuns: 30,
@@ -68,7 +67,7 @@ describe('ScoreCalculationService', () => {
 
         expect(result).not.toBeNull();
         expect(result!.playerId).toBe('player-1');
-        expect(result!.statisticType).toBe('batting');
+        expect(result!.statisticType).toBe('hitting');
         expect(result!.categoryScores).toHaveLength(5);
 
         // Calculate expected total: 150*1 + 30*4 + 100*1 + 20*2 + 90*1
@@ -82,7 +81,6 @@ describe('ScoreCalculationService', () => {
           position: '1B',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: {
                 hits: 150,
                 homeRuns: 30,
@@ -114,7 +112,6 @@ describe('ScoreCalculationService', () => {
           position: 'SS',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: {
                 hits: 100,
                 // homeRuns, rbi, stolenBases, runs are missing
@@ -136,7 +133,6 @@ describe('ScoreCalculationService', () => {
           position: 'C',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: {
                 hits: 0,
                 homeRuns: 0,
@@ -161,7 +157,6 @@ describe('ScoreCalculationService', () => {
           position: 'P',
           statistics: [
             {
-              statisticType: 'pitching',
               statistics: {
                 wins: 15,
                 strikeouts: 200,
@@ -216,7 +211,6 @@ describe('ScoreCalculationService', () => {
           position: 'P',
           statistics: [
             {
-              statisticType: 'pitching',
               statistics: {
                 era: 2.5,
                 whip: 1.0,
@@ -243,7 +237,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: {
                 hits: 100,
               },
@@ -263,7 +256,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: {
                 homeRuns: 25, // camelCase
               },
@@ -286,7 +278,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: {
                 stolen_bases: 15, // snake_case
               },
@@ -297,7 +288,7 @@ describe('ScoreCalculationService', () => {
         const config = {
           id: 'config-1',
           categories: {
-            batting: {
+            hitting: {
               stolenBases: 2, // Config uses camelCase
             },
             pitching: {},
@@ -319,7 +310,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: {
                 hits: '120', // String number
                 homeRuns: '30', // String number
@@ -341,7 +331,6 @@ describe('ScoreCalculationService', () => {
           position: 'P',
           statistics: [
             {
-              statisticType: 'pitching',
               statistics: {
                 era: '3.45', // String decimal
                 whip: '1.15', // String decimal
@@ -363,7 +352,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: {
                 hits: 'invalid', // Cannot parse
                 homeRuns: 30,
@@ -412,7 +400,7 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'fielding', // Not batting or pitching
+              statisticType: 'fielding', // Not hitting or pitching
               statistics: {},
             },
           ],
@@ -429,7 +417,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: null,
             },
           ],
@@ -448,7 +435,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: 'not-an-object',
             },
           ],
@@ -467,7 +453,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: {
                 hits: 100,
                 homeRuns: 30,
@@ -479,7 +464,7 @@ describe('ScoreCalculationService', () => {
         const emptyConfig = {
           id: 'config-empty',
           categories: {
-            batting: {}, // No categories defined
+            hitting: {}, // No categories defined
             pitching: {},
           },
         };
@@ -501,7 +486,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: { hits: 150, homeRuns: 30 },
             },
           ],
@@ -511,7 +495,6 @@ describe('ScoreCalculationService', () => {
           position: '1B',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: { hits: 180, homeRuns: 40 },
             },
           ],
@@ -521,7 +504,6 @@ describe('ScoreCalculationService', () => {
           position: '2B',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: { hits: 120, homeRuns: 10 },
             },
           ],
@@ -543,7 +525,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: { hits: 150 },
             },
           ],
@@ -558,7 +539,6 @@ describe('ScoreCalculationService', () => {
           position: '2B',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: { hits: 120 },
             },
           ],
@@ -586,7 +566,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: { hits: 150 },
             },
           ],
@@ -596,19 +575,18 @@ describe('ScoreCalculationService', () => {
           position: 'P',
           statistics: [
             {
-              statisticType: 'pitching',
               statistics: { wins: 10 },
             },
           ],
         },
       ];
 
-      // Use batting config - pitcher will have score of 0 (empty pitching categories)
+      // Use hitting config - pitcher will have score of 0 (empty pitching categories)
       const result = service.calculatePlayerScores(players, mockBattingConfig);
 
       expect(result.size).toBe(2);
       expect(result.get('player-1')).toBe(150); // hits * 1
-      expect(result.get('player-2')).toBe(0); // No batting categories match
+      expect(result.get('player-2')).toBe(0); // No hitting categories match
     });
   });
 
@@ -627,7 +605,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: { [input]: 100 },
             },
           ],
@@ -636,7 +613,7 @@ describe('ScoreCalculationService', () => {
         const config = {
           id: 'test-config',
           categories: {
-            batting: { [expected]: 1 },
+            hitting: { [expected]: 1 },
             pitching: {},
           },
         };
@@ -661,7 +638,6 @@ describe('ScoreCalculationService', () => {
           position: 'OF',
           statistics: [
             {
-              statisticType: 'batting',
               statistics: { [expected]: 100 },
             },
           ],
@@ -670,7 +646,7 @@ describe('ScoreCalculationService', () => {
         const config = {
           id: 'test-config',
           categories: {
-            batting: { [input]: 1 },
+            hitting: { [input]: 1 },
             pitching: {},
           },
         };

@@ -14,7 +14,7 @@ const ScoringConfigFormPage: React.FC = () => {
 
   const [name, setName] = useState('');
   const [isActive, setIsActive] = useState(false);
-  const [battingStats, setBattingStats] = useState<StatEntry[]>([
+  const [hittingStats, setHittingStats] = useState<StatEntry[]>([
     { name: 'hits', points: 1 },
     { name: 'doubles', points: 2 },
     { name: 'triples', points: 3 },
@@ -49,7 +49,7 @@ const ScoringConfigFormPage: React.FC = () => {
       setIsActive(config.isActive);
 
       // Convert categories object to array format
-      const battingEntries = Object.entries(config.categories.batting).map(([name, points]) => ({
+      const hittingEntries = Object.entries(config.categories.hitting).map(([name, points]) => ({
         name,
         points: points as number,
       }));
@@ -58,7 +58,7 @@ const ScoringConfigFormPage: React.FC = () => {
         points: points as number,
       }));
 
-      setBattingStats(battingEntries);
+      setHittingStats(hittingEntries);
       setPitchingStats(pitchingEntries);
       setLoading(false);
     } catch (err: any) {
@@ -78,8 +78,8 @@ const ScoringConfigFormPage: React.FC = () => {
 
     // Convert arrays to objects
     const categories = {
-      batting: Object.fromEntries(
-        battingStats.filter(s => s.name.trim()).map(s => [s.name, s.points])
+      hitting: Object.fromEntries(
+        hittingStats.filter(s => s.name.trim()).map(s => [s.name, s.points])
       ),
       pitching: Object.fromEntries(
         pitchingStats.filter(s => s.name.trim()).map(s => [s.name, s.points])
@@ -100,21 +100,21 @@ const ScoringConfigFormPage: React.FC = () => {
     }
   };
 
-  const addBattingStat = () => {
-    setBattingStats([...battingStats, { name: '', points: 0 }]);
+  const addHittingStat = () => {
+    setHittingStats([...hittingStats, { name: '', points: 0 }]);
   };
 
-  const removeBattingStat = (index: number) => {
-    setBattingStats(battingStats.filter((_, i) => i !== index));
+  const removeHittingStat = (index: number) => {
+    setHittingStats(hittingStats.filter((_, i) => i !== index));
   };
 
-  const updateBattingStat = (index: number, field: 'name' | 'points', value: string | number) => {
-    const newStats = [...battingStats];
+  const updateHittingStat = (index: number, field: 'name' | 'points', value: string | number) => {
+    const newStats = [...hittingStats];
     newStats[index] = {
       ...newStats[index],
       [field]: value,
     };
-    setBattingStats(newStats);
+    setHittingStats(newStats);
   };
 
   const addPitchingStat = () => {
@@ -190,10 +190,10 @@ const ScoringConfigFormPage: React.FC = () => {
 
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Batting Stats</h3>
+              <h3 className="text-lg font-medium text-gray-900">Hitting Stats</h3>
               <button
                 type="button"
-                onClick={addBattingStat}
+                onClick={addHittingStat}
                 className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded text-sm hover:bg-indigo-200"
               >
                 Add Stat
@@ -201,12 +201,12 @@ const ScoringConfigFormPage: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              {battingStats.map((stat, index) => (
+              {hittingStats.map((stat, index) => (
                 <div key={index} className="flex gap-2">
                   <input
                     type="text"
                     value={stat.name}
-                    onChange={(e) => updateBattingStat(index, 'name', e.target.value)}
+                    onChange={(e) => updateHittingStat(index, 'name', e.target.value)}
                     placeholder="Stat name (e.g., hits)"
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   />
@@ -214,13 +214,13 @@ const ScoringConfigFormPage: React.FC = () => {
                     type="number"
                     step="0.1"
                     value={stat.points}
-                    onChange={(e) => updateBattingStat(index, 'points', parseFloat(e.target.value))}
+                    onChange={(e) => updateHittingStat(index, 'points', parseFloat(e.target.value))}
                     placeholder="Points"
                     className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   />
                   <button
                     type="button"
-                    onClick={() => removeBattingStat(index)}
+                    onClick={() => removeHittingStat(index)}
                     className="bg-red-100 text-red-700 px-3 py-2 rounded hover:bg-red-200"
                   >
                     Remove

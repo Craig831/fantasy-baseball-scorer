@@ -36,7 +36,7 @@ export class PlayerResearchController {
     @CurrentUser() user: any,
     @Query() filters: SearchPlayersDto,
   ): Promise<SearchPlayersResponseDto> {
-    const { players, total } = await this.playersService.findAll(filters, user.id);
+    const { players, total } = await this.playerResearchService.searchPlayers(filters, user.id);
 
     const page = filters.page || 1;
     const limit = filters.limit || 50;
